@@ -9,7 +9,7 @@ class User(AbstractUser):
         max_length=150,
         null=False,
         blank=False,
-        validators=[validators.RegexValidator(regex=r'^[\w.@+\- ]+$')],
+        validators=[validators.RegexValidator(regex=r'^[\w.@+-]')],
     )
     email = models.EmailField(
         unique=True,
@@ -28,4 +28,4 @@ class User(AbstractUser):
     )
 
     def __str__(self):
-        return self.username
+        return self.first_name + ' ' + self.last_name + ' ' + self.username

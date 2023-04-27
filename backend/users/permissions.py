@@ -15,7 +15,7 @@ class AdminOrReadOnly(permissions.BasePermission):
         ) or request.method in permissions.SAFE_METHODS
 
 
-class AuthorOrReviewerOrReadOnly(permissions.BasePermission):
+class AuthorOrAdminOrReadOnly(permissions.BasePermission):
     def has_permission(self, request, view):
         if not request.auth:
             return request.method in permissions.SAFE_METHODS

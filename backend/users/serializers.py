@@ -8,24 +8,12 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'username',
             'email',
+            'id',
+            'username',
             'first_name',
             'last_name',
         )
-
-    def validate_username(self, value):
-        if value == 'me':
-            raise serializers.ValidationError(f"Name '{value}' is forbidden")
-        return value
-
-
-class SignUpSerializer(serializers.Serializer):
-    email = serializers.EmailField(max_length=254)
-    username = serializers.CharField(
-        max_length=150,
-        validators=[RegexValidator(regex=r'^[\w.@+\- ]+$')],
-    )
 
     def validate_username(self, value):
         if value == 'me':
