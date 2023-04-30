@@ -10,9 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
-import os
-from pathlib import Path
 from dotenv import load_dotenv
+from pathlib import Path
 
 load_dotenv()
 
@@ -41,6 +40,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'djoser',
+    'users',
 ]
 
 MIDDLEWARE = [
@@ -79,12 +82,14 @@ WSGI_APPLICATION = 'foodgram.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': os.getenv('DB_ENGINE', default='django.db.backends.postgresql'),
-        'NAME': os.getenv('DB_NAME', default='postgres'),
-        'USER': os.getenv('POSTGRES_USER', default='postgres'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', default='postgres'),
-        'HOST': os.getenv('DB_HOST', default='db'),
-        'PORT': os.getenv('DB_PORT', default='5432')
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+        # 'ENGINE': os.getenv('DB_ENGINE', default='django.db.backends.postgresql'),
+        # 'NAME': os.getenv('DB_NAME', default='postgres'),
+        # 'USER': os.getenv('POSTGRES_USER', default='postgres'),
+        # 'PASSWORD': os.getenv('POSTGRES_PASSWORD', default='postgres'),
+        # 'HOST': os.getenv('DB_HOST', default='db'),
+        # 'PORT': os.getenv('DB_PORT', default='5432')
     }
 }
 
@@ -99,12 +104,12 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
     },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    # {
+    #     'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    # },
+    # {
+    #     'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    # },
 ]
 
 
@@ -125,7 +130,23 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+STATICFILES_DIRS = ((BASE_DIR / 'static/'),)
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ],
+    # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    # 'PAGE_SIZE': 10
+}
+
+
+AUTH_USER_MODEL = 'users.CustomUser'
