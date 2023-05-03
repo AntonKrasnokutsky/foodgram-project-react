@@ -1,13 +1,18 @@
 from django.urls import include, path
 from rest_framework import routers
 
-from .views import TagsViewSte
+from .views import IngredientsViewStet, TagsViewStet
 
 router = routers.DefaultRouter()
 router.register(
-    'tags/',
-    TagsViewSte,
+    'tags',
+    TagsViewStet,
     basename='tags'
+)
+router.register(
+    'ingredients',
+    IngredientsViewStet,
+    basename='ingredients'
 )
 # router.register(
 #     r'titles/(?P<title_id>\d+)/reviews/(?P<review_id>\d+)/comments',
