@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Ingredients, Recipes, Tags
+from .models import Ingredients, Recipes, RecipeIngredients, Tags
 
 
 class IngredientsAdmin(admin.ModelAdmin):
@@ -22,6 +22,9 @@ class RecipesAdmin(admin.ModelAdmin):
     list_display = ['name', 'author', ]
 
 
+
 admin.site.register(Ingredients, IngredientsAdmin)
 admin.site.register(Tags, TagsAdmin)
 admin.site.register(Recipes, RecipesAdmin)
+admin.site.register(RecipeIngredients)
+
