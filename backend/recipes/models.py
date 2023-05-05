@@ -29,7 +29,7 @@ class Ingredients(models.Model):
 
 
 class Subscriptions(models.Model):
-    user = models.ForeignKey(
+    subscriber = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='subscriber'
@@ -50,8 +50,6 @@ class Recipes(models.Model):
     name = models.CharField(max_length=100, verbose_name='Название')
     image = models.ImageField(
         upload_to='recipes/',
-        null=True,
-        default=None
     )
     text = models.TextField(verbose_name='Описание')
     cooking_time = models.SmallIntegerField(

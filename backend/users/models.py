@@ -7,25 +7,20 @@ class CustomUser(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
     username = models.CharField(
-        unique=False,
+        unique=True,
         max_length=150,
-        null=True,
-        blank=True,
         validators=[validators.RegexValidator(regex=r'^[\w.@+-]')],
     )
     email = models.EmailField(
         unique=True,
         max_length=254,
-        blank=False,
     )
     first_name = models.CharField(
         max_length=150,
-        blank=True,
         default='',
     )
     last_name = models.CharField(
         max_length=150,
-        blank=True,
         default=''
     )
 
