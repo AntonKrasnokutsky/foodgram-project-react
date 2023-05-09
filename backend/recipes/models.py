@@ -57,6 +57,7 @@ class Subscriptions(models.Model):
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
 
+
 class Recipes(models.Model):
     author = models.ForeignKey(
         User,
@@ -72,6 +73,7 @@ class Recipes(models.Model):
     cooking_time = models.SmallIntegerField(
         verbose_name='Время приготовления (минут)'
     )
+    tags = models.ManyToManyField(Tags, through='RecipesTag')
 
     class Meta:
         ordering = ['name', ]
@@ -96,9 +98,16 @@ class RecipesTag(models.Model):
 
 
 class RecipeIngredients(models.Model):
-    recipe = models.ForeignKey('Recipes', on_delete=models.CASCADE, related_name='ingredients')
-    ingredient = models.ForeignKey('Ingredients', on_delete=models.CASCADE)
-    amount = models.FloatField()
+    recipe = models.ForeignKey(
+        'Recipes',
+        on_delete=models.CASCADE,
+        related_name='ingredients'
+    )
+    ingredient = models.ForeignKey(
+        'Ingredients',
+        on_delete=models.CASCADE,
+    )
+    amount = models.IntegerField()
 
     class Meta:
         ordering = ['recipe', 'ingredient', ]
@@ -125,6 +134,27 @@ class Favorites(models.Model):
         ordering = ['recipe', ]
         verbose_name = 'Избранный'
         verbose_name_plural = 'Избранные'
+
+    def __str__(self, *args, **kwargs):
+        return self.recipe.name
+
+
+class ShoppingCart(models.Model):
+    recipe = models.ForeignKey(
+        'Recipes',
+        on_delete=models.CASCADE,
+        related_name='shopping_cart'
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='shopping_cart'
+    )
+
+    class Meta:
+        ordering = ['recipe', ]
+        verbose_name = 'Список покупок'
+        verbose_name_plural = 'Списоки покупок'
 
     def __str__(self, *args, **kwargs):
         return self.recipe.name
