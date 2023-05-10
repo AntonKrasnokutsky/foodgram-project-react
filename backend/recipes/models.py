@@ -39,7 +39,7 @@ class Ingredients(models.Model):
 
 
 class Subscriptions(models.Model):
-    subscriber = models.ForeignKey(
+    user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='subscriber',
@@ -53,7 +53,7 @@ class Subscriptions(models.Model):
     )
 
     class Meta:
-        ordering = ['author', 'subscriber', ]
+        ordering = ['author', 'user', ]
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
 

@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
 from recipes.models import (Ingredients, RecipeIngredients, Recipes,
-                            RecipesTag, Tags)
+                            RecipesTag, Tags, Subscriptions)
 from rest_framework import serializers
 
 User = get_user_model()
@@ -219,3 +219,40 @@ class RecepiesSerializer(serializers.ModelSerializer):
         self.add_recipe_ingridients(self.instance, ingredients)
 
         return self.instance
+
+
+
+
+
+class SubscriptionsSerializer(serializers.ModelSerializer):
+    user = serializers.SlugRelatedField(
+        queryset=User.objects.all(),
+        slug_field='username',
+        default=serializers.CurrentUserDefault()
+    )
+    author = serializers.SlugRelatedField(
+        queryset=User.objects.all(),
+        slug_field='username'
+    )
+
+    class Meta:
+        fields = ('user', 'author')
+        model = Subscriptions
+        validators = [
+            serializers.UniqueTogetherValidator(
+                queryset=Subscriptions.objects.all(),
+                fields=['user', 'author'],
+                message='Данная подписка уже существует'
+            )
+        ]
+
+    def validate_following(self, data):
+        user = self.context['request'].user
+        author = get_object_or_404(User, pk=data)
+
+        if user == author and self.context['request'].method == 'POST':
+            raise serializers.ValidationError(
+                'Нельзя подписаться на самого себя'
+            )
+
+        return data
