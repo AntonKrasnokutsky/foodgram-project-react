@@ -3,7 +3,7 @@ import base64
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
-from recipes.models import (Ingredients, RecipeIngredients, Recipes,
+from recipes.models import (Ingredients, Favorites, RecipeIngredients, Recipes,
                             RecipesTag, Tags, Subscriptions)
 from rest_framework import serializers
 
@@ -33,7 +33,7 @@ class AuthorSerializer(serializers.ModelSerializer):
             return False
         author = get_object_or_404(User, username=obj.username)
         return author.publisher.filter(
-            subscriber=user
+            user=user
         ).exists()
 
 
@@ -221,7 +221,26 @@ class RecepiesSerializer(serializers.ModelSerializer):
         return self.instance
 
 
+class FavoritesSerializer(serializers.ModelSerializer):
+    id = serializers.SerializerMethodField()
+    name = serializers.StringRelatedField(source='recipe.name')
+    image = Base64ImageField(
+        required=False,
+        allow_null=True,
+        source='recipe.image'
+    )
+    cooking_time = serializers.SerializerMethodField()
 
+    class Meta:
+        model = Favorites
+        fields = ['id', 'name', 'image', 'cooking_time', ]
+        read_only_fields = ['id', 'name', 'image', 'cooking_time', ]
+
+    def get_id(self, obj):
+        return obj.recipe.id
+
+    def get_cooking_time(self, obj):
+        return obj.recipe.cooking_time
 
 
 class SubscriptionsSerializer(serializers.ModelSerializer):

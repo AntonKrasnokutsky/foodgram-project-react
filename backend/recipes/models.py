@@ -134,9 +134,14 @@ class Favorites(models.Model):
         ordering = ['recipe', ]
         verbose_name = 'Избранный'
         verbose_name_plural = 'Избранные'
+        # unique_together = ('recipe', 'user')
+        constraints = [
+            models.UniqueConstraint(fields=['recipe', 'user'], 
+                                    name='recipe_and_user_uniq')
+        ]
 
-    def __str__(self, *args, **kwargs):
-        return self.recipe.name
+    # def __str__(self, *args, **kwargs):
+    #     return self.recipe.name
 
 
 class ShoppingCart(models.Model):
