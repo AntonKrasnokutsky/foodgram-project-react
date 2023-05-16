@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404
 from recipes.models import (Ingredients, Favorites, RecipeIngredients, Recipes,
                             RecipesTag, Tags, Subscriptions)
 from rest_framework import serializers
+from http import HTTPStatus
 
 User = get_user_model()
 
@@ -241,6 +242,22 @@ class FavoritesSerializer(serializers.ModelSerializer):
 
     def get_cooking_time(self, obj):
         return obj.recipe.cooking_time
+
+    def get_user(self):
+        user = None
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            user = request.user
+        return user
+
+    # def validate(self, attrs):
+    #     recipe = get_object_or_404(Recipes, pk=self.kwargs.get('recipe_id'))
+    #     if Favorites.objects.filter(recipe=recipe, user=self.get_user()).exists():
+    #         data = {
+    #             'error': 'Рецепта уже в избранном.'
+    #         }
+    #         raise serializers.ValidationError(detail=data, code=HTTPStatus.BAD_REQUEST)
+    #     return super().validate(attrs)
 
 
 class SubscriptionsSerializer(serializers.ModelSerializer):

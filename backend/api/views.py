@@ -1,9 +1,11 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, viewsets, mixins
+from rest_framework import filters, viewsets, mixins, exceptions
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from django.contrib.auth import get_user_model
+from django.http import JsonResponse
+from http import HTTPStatus
 
 from recipes.models import Favorites, Ingredients, Recipes, Tags
 from .serializers import (
@@ -16,20 +18,18 @@ from .serializers import (
 User = get_user_model()
 
 
-class IngredientsViewSet(viewsets.ModelViewSet):
+class IngredientsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     queryset = Ingredients.objects.all()
     serializer_class = IngredientsSerializer
     pagination_class = None
-    http_method_names = ['get', ]
     filter_backends = [DjangoFilterBackend, ]
     filterset_fields = ['name', ]
 
 
-class TagsViewSet(viewsets.ModelViewSet):
+class TagsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     queryset = Tags.objects.all()
     serializer_class = TagsSerializer
     pagination_class = None
-    http_method_names = ['get', ]
 
 
 class FavoritesViewSet(mixins.CreateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
@@ -40,23 +40,33 @@ class FavoritesViewSet(mixins.CreateModelMixin, mixins.DestroyModelMixin, viewse
         user = get_object_or_404(User, pk=self.request.user)
         return user.favorites.all()
 
+    def create(self, request, *args, **kwargs):
+        recipe = get_object_or_404(Recipes, pk=self.kwargs.get('recipe_id'))
+        if Favorites.objects.filter(recipe=recipe, user=self.request.user).exists():
+            data = {
+                'error': 'Рецепт уже в избранном.'
+            }
+            return JsonResponse(data, status=HTTPStatus.BAD_REQUEST)
+        return super().create(request, *args, **kwargs)
+
     def perform_create(self, serializer):
         if not serializer.is_valid():
             return super().permission_denied(self.request)
+
         recipe = get_object_or_404(Recipes, pk=self.kwargs.get('recipe_id'))
         serializer.save(recipe_id=recipe.id, user_id=self.request.user.id)
-
-        return super().perform_create(serializer)
 
     def destroy(self, request, *args, **kwargs):
         recipe = get_object_or_404(Recipes, pk=self.kwargs.get('recipe_id'))
         try:
             favorite = Favorites.objects.get(recipe=recipe, user=self.request.user)
             favorite.delete()
-            
         except Favorites.DoesNotExist:
-            pass
-        # return super().destroy(request, *args, **kwargs)
+            data = {
+                'error': 'Рецепта нет в избранном.'
+            }
+            return JsonResponse(data, status=HTTPStatus.BAD_REQUEST)
+        return JsonResponse({}, status=HTTPStatus.NO_CONTENT)
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
