@@ -6,7 +6,6 @@ from django.shortcuts import get_object_or_404
 from recipes.models import (Ingredients, Favorites, RecipeIngredients, Recipes,
                             RecipesTag, Tags, Subscriptions)
 from rest_framework import serializers
-from http import HTTPStatus
 
 User = get_user_model()
 
@@ -33,7 +32,7 @@ class AuthorSerializer(serializers.ModelSerializer):
         if user is None or user.is_anonymous:
             return False
         author = get_object_or_404(User, username=obj.username)
-        return author.publisher.filter(
+        return author.subscriber.filter(
             user=user
         ).exists()
 
@@ -243,52 +242,46 @@ class FavoritesSerializer(serializers.ModelSerializer):
     def get_cooking_time(self, obj):
         return obj.recipe.cooking_time
 
-    def get_user(self):
-        user = None
-        request = self.context.get('request')
-        if request and hasattr(request, 'user'):
-            user = request.user
-        return user
 
-    # def validate(self, attrs):
-    #     recipe = get_object_or_404(Recipes, pk=self.kwargs.get('recipe_id'))
-    #     if Favorites.objects.filter(recipe=recipe, user=self.get_user()).exists():
-    #         data = {
-    #             'error': 'Рецепта уже в избранном.'
-    #         }
-    #         raise serializers.ValidationError(detail=data, code=HTTPStatus.BAD_REQUEST)
-    #     return super().validate(attrs)
+class RecepiesSubscribeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recipes
+        fields = [
+            'id',
+            'name',
+            'image',
+            'cooking_time',
+        ]
 
 
-class SubscriptionsSerializer(serializers.ModelSerializer):
-    user = serializers.SlugRelatedField(
-        queryset=User.objects.all(),
-        slug_field='username',
-        default=serializers.CurrentUserDefault()
-    )
-    author = serializers.SlugRelatedField(
-        queryset=User.objects.all(),
-        slug_field='username'
-    )
+class SubscribeSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source='author.email')
+    id = serializers.SerializerMethodField()
+    username = serializers.StringRelatedField(source='author.username')
+    first_name = serializers.StringRelatedField(source='author.first_name')
+    last_name = serializers.StringRelatedField(source='author.last_name')
+    is_subscribed = serializers.SerializerMethodField()
+    recipes = RecepiesSubscribeSerializer(read_only=True, many=True)
+    recipes_count = serializers.SerializerMethodField()
 
     class Meta:
         fields = ('user', 'author')
         model = Subscriptions
-        validators = [
-            serializers.UniqueTogetherValidator(
-                queryset=Subscriptions.objects.all(),
-                fields=['user', 'author'],
-                message='Данная подписка уже существует'
-            )
-        ]
 
-    def validate_following(self, data):
-        user = self.context['request'].user
-        author = get_object_or_404(User, pk=data)
+    def get_id(self, obj):
+        return obj.author.id
 
-        if user == author and self.context['request'].method == 'POST':
-            raise serializers.ValidationError(
-                'Нельзя подписаться на самого себя'
-            )
+    def get_is_subscribed(self, obj):
+        user = None
+        request = self.context.get("request")
+        if request and hasattr(request, "user"):
+            user = request.user
+        if user is None or user.is_anonymous:
+            return False
+        author = get_object_or_404(User, username=obj.username)
+        return author.subscriber.filter(
+            user=user
+        ).exists()
 
-        return data
+    def get_recipes_count(self, obj):
+        return obj.author.recipes.all().count()

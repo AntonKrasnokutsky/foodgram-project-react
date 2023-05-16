@@ -42,13 +42,13 @@ class Subscriptions(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='subscriber',
+        related_name='publisher',
         verbose_name='Подписчик',
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='publisher',
+        related_name='subscriber',
         verbose_name='Автор'
     )
 
@@ -63,6 +63,7 @@ class Recipes(models.Model):
         User,
         on_delete=models.CASCADE,
         verbose_name='Автор',
+        related_name='recipes',
     )
     name = models.CharField(max_length=100, verbose_name='Название')
     image = models.ImageField(
@@ -136,7 +137,7 @@ class Favorites(models.Model):
         verbose_name_plural = 'Избранные'
         # unique_together = ('recipe', 'user')
         constraints = [
-            models.UniqueConstraint(fields=['recipe', 'user'], 
+            models.UniqueConstraint(fields=['recipe', 'user'],
                                     name='recipe_and_user_uniq')
         ]
 
