@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator
 from django.db import models
 
 User = get_user_model()
@@ -6,12 +7,12 @@ User = get_user_model()
 
 class Tags(models.Model):
     name = models.CharField(
-        max_length=100,
+        max_length=200,
         unique=True,
         verbose_name='Тег'
     )
     color = models.CharField(max_length=7, unique=True, verbose_name='Цвет')
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(max_length=200, unique=True)
 
     class Meta:
         ordering = ['name', ]
@@ -23,9 +24,9 @@ class Tags(models.Model):
 
 
 class Ingredients(models.Model):
-    name = models.CharField(max_length=100, verbose_name='Ингридиент')
+    name = models.CharField(max_length=200, verbose_name='Ингридиент')
     measurement_unit = models.CharField(
-        max_length=100,
+        max_length=200,
         verbose_name='Единица измерения'
     )
 
@@ -57,6 +58,9 @@ class Subscriptions(models.Model):
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
 
+    def __str__(self, *args, **kwargs):
+        return f'{self.user} подписался на {self.author}'
+
 
 class Recipes(models.Model):
     author = models.ForeignKey(
@@ -65,14 +69,18 @@ class Recipes(models.Model):
         verbose_name='Автор',
         related_name='recipes',
     )
-    name = models.CharField(max_length=100, verbose_name='Название')
+    name = models.CharField(max_length=200, verbose_name='Название')
     image = models.ImageField(
         upload_to='recipes/',
         verbose_name='Картинка'
     )
     text = models.TextField(verbose_name='Описание')
     cooking_time = models.SmallIntegerField(
-        verbose_name='Время приготовления (минут)'
+        verbose_name='Время приготовления (минут)',
+        validators=[MinValueValidator(
+            1,
+            'Время готовки должно быть больше 0 минут.'
+        )]
     )
     tags = models.ManyToManyField(Tags, through='RecipesTag')
 

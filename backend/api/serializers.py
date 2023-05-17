@@ -261,11 +261,24 @@ class SubscribeSerializer(serializers.ModelSerializer):
     first_name = serializers.StringRelatedField(source='author.first_name')
     last_name = serializers.StringRelatedField(source='author.last_name')
     is_subscribed = serializers.SerializerMethodField()
-    recipes = RecepiesSubscribeSerializer(read_only=True, many=True)
+    recipes = RecepiesSubscribeSerializer(
+        read_only=True,
+        many=True,
+        source='author.recipes'
+    )
     recipes_count = serializers.SerializerMethodField()
 
     class Meta:
-        fields = ('user', 'author')
+        fields = [
+            'email',
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'is_subscribed',
+            'recipes',
+            'recipes_count',
+        ]
         model = Subscriptions
 
     def get_id(self, obj):
@@ -278,7 +291,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
             user = request.user
         if user is None or user.is_anonymous:
             return False
-        author = get_object_or_404(User, username=obj.username)
+        author = get_object_or_404(User, username=obj.author.username)
         return author.subscriber.filter(
             user=user
         ).exists()

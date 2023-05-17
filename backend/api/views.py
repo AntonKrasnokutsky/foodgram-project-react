@@ -94,5 +94,4 @@ class SubscribeViewSet(
     serializer_class = SubscribeSerializer
 
     def get_queryset(self):
-        user = get_object_or_404(User, pk=self.request.user)
-        return user.publisher.all()
+        return self.request.user.publisher.all()
