@@ -256,7 +256,7 @@ class RecepiesSubscribeSerializer(serializers.ModelSerializer):
 
 class SubscribeSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source='author.email')
-    id = serializers.SerializerMethodField()
+    id = serializers.IntegerField(source='author.id')
     username = serializers.StringRelatedField(source='author.username')
     first_name = serializers.StringRelatedField(source='author.first_name')
     last_name = serializers.StringRelatedField(source='author.last_name')
@@ -280,9 +280,6 @@ class SubscribeSerializer(serializers.ModelSerializer):
             'recipes_count',
         ]
         model = Subscriptions
-
-    def get_id(self, obj):
-        return obj.author.id
 
     def get_is_subscribed(self, obj):
         user = None

@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from recipes.models import Favorites, Ingredients, Recipes, Tags
+from recipes.models import Favorites, Ingredients, Recipes, Tags, Subscriptions
 from rest_framework import filters, mixins, viewsets
 from rest_framework.pagination import LimitOffsetPagination
 
@@ -95,3 +95,46 @@ class SubscribeViewSet(
 
     def get_queryset(self):
         return self.request.user.publisher.all()
+
+    @property
+    def author(self):
+        return get_object_or_404(User, pk=self.kwargs.get('author_id'))
+
+    def create(self, request, *args, **kwargs):
+        # author = get_object_or_404(User, pk=self.kwargs.get('author_id'))
+        if self.author == self.request.user:
+            data = {
+                'error': 'Нельзя подписаться на себя..'
+            }
+            return JsonResponse(data, status=HTTPStatus.BAD_REQUEST)
+        if Subscriptions.objects.filter(
+            author=self.author,
+            user=self.request.user
+        ).exists():
+            data = {
+                'error': 'Подписка на автора активна.'
+            }
+            return JsonResponse(data, status=HTTPStatus.BAD_REQUEST)
+        return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        if not serializer.is_valid():
+            return super().permission_denied(self.request)
+
+        # author = get_object_or_404(User, pk=self.kwargs.get('author_id'))
+        serializer.save(author_id=self.author.id, user_id=self.request.user.id)
+
+    def destroy(self, request, *args, **kwargs):
+        # recipe = get_object_or_404(Recipes, pk=self.kwargs.get('recipe_id'))
+        try:
+            subscriptions = Subscriptions.objects.get(
+                author=self.author,
+                user=self.request.user
+            )
+            subscriptions.delete()
+        except Subscriptions.DoesNotExist:
+            data = {
+                'error': 'Вы не подписаны на автора.'
+            }
+            return JsonResponse(data, status=HTTPStatus.BAD_REQUEST)
+        return JsonResponse({}, status=HTTPStatus.NO_CONTENT)
