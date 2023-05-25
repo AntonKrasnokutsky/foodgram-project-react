@@ -37,14 +37,17 @@ class FavoritesViewSet(
     serializer_class = FavoritesSerializer
     pagination_class = None
 
+    @property
+    def recipe(self):
+        return get_object_or_404(Recipes, pk=self.kwargs.get('recipe_id'))
+
     def get_queryset(self):
         user = get_object_or_404(User, pk=self.request.user)
         return user.favorites.all()
 
     def create(self, request, *args, **kwargs):
-        recipe = get_object_or_404(Recipes, pk=self.kwargs.get('recipe_id'))
         if Favorites.objects.filter(
-            recipe=recipe,
+            recipe=self.recipe,
             user=self.request.user
         ).exists():
             data = {
@@ -57,14 +60,12 @@ class FavoritesViewSet(
         if not serializer.is_valid():
             return super().permission_denied(self.request)
 
-        recipe = get_object_or_404(Recipes, pk=self.kwargs.get('recipe_id'))
-        serializer.save(recipe_id=recipe.id, user_id=self.request.user.id)
+        serializer.save(recipe_id=self.recipe.id, user_id=self.request.user.id)
 
     def destroy(self, request, *args, **kwargs):
-        recipe = get_object_or_404(Recipes, pk=self.kwargs.get('recipe_id'))
         try:
             favorite = Favorites.objects.get(
-                recipe=recipe,
+                recipe=self.recipe,
                 user=self.request.user
             )
             favorite.delete()
@@ -101,7 +102,6 @@ class SubscribeViewSet(
         return get_object_or_404(User, pk=self.kwargs.get('author_id'))
 
     def create(self, request, *args, **kwargs):
-        # author = get_object_or_404(User, pk=self.kwargs.get('author_id'))
         if self.author == self.request.user:
             data = {
                 'error': 'Нельзя подписаться на себя..'
@@ -118,14 +118,14 @@ class SubscribeViewSet(
         return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
+        print(self.author.id)
+        print(self.author.email)
         if not serializer.is_valid():
             return super().permission_denied(self.request)
 
-        # author = get_object_or_404(User, pk=self.kwargs.get('author_id'))
-        serializer.save(author_id=self.author.id, user_id=self.request.user.id)
+        serializer.save(author=self.author, user=self.request.user)
 
     def destroy(self, request, *args, **kwargs):
-        # recipe = get_object_or_404(Recipes, pk=self.kwargs.get('recipe_id'))
         try:
             subscriptions = Subscriptions.objects.get(
                 author=self.author,

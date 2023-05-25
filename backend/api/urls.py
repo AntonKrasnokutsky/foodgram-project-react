@@ -18,12 +18,6 @@ router.register(
     RecipesViewSet
 )
 
-router.register(
-    r'users/(?P<author_id>\d+)/subscribe',
-    SubscribeViewSet,
-    basename='subscribe'
-)
-
 urlpatterns = [
     path('', include(router.urls)),
     path(
@@ -31,10 +25,15 @@ urlpatterns = [
         SubscribeViewSet.as_view({'get': 'list'})
     ),
     path(
+        'users/<int:author_id>/subscribe/',
+        SubscribeViewSet.as_view({
+            'post': 'create',
+            'delete': 'destroy'
+        })),
+    path(
         'recipes/<int:recipe_id>/favorite/',
         FavoritesViewSet.as_view({
             'post': 'create',
             'delete': 'destroy'
         })),
-    
 ]
