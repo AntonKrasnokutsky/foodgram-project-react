@@ -4,13 +4,13 @@ from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from recipes.models import Favorites, Ingredients, Recipes, Tags, Subscriptions
+from recipes.models import Favorites, Ingredients, Recipes, Tags, Subscriptions, ShoppingCart
 from rest_framework import filters, mixins, viewsets
 from rest_framework.pagination import LimitOffsetPagination
 
 from .serializers import (FavoritesSerializer, IngredientsSerializer,
                           RecepiesSerializer, SubscribeSerializer,
-                          TagsSerializer)
+                          TagsSerializer, ShoppingCartSerializer)
 
 User = get_user_model()
 
@@ -135,6 +135,55 @@ class SubscribeViewSet(
         except Subscriptions.DoesNotExist:
             data = {
                 'error': 'Вы не подписаны на автора.'
+            }
+            return JsonResponse(data, status=HTTPStatus.BAD_REQUEST)
+        return JsonResponse({}, status=HTTPStatus.NO_CONTENT)
+
+
+class ShoppingCartViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet
+):
+    serializer_class = ShoppingCartSerializer
+    pagination_class = None
+
+    @property
+    def recipe(self):
+        return get_object_or_404(Recipes, pk=self.kwargs.get('recipe_id'))
+
+    def get_queryset(self):
+        user = get_object_or_404(User, pk=self.request.user)
+        return user.shopping_cart.all()
+
+    def create(self, request, *args, **kwargs):
+        if ShoppingCart.objects.filter(
+            recipe=self.recipe,
+            user=self.request.user
+        ).exists():
+            data = {
+                'error': 'Рецепт уже в списке покупок.'
+            }
+            return JsonResponse(data, status=HTTPStatus.BAD_REQUEST)
+        return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        if not serializer.is_valid():
+            return super().permission_denied(self.request)
+
+        serializer.save(recipe_id=self.recipe.id, user_id=self.request.user.id)
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            favorite = ShoppingCart.objects.get(
+                recipe=self.recipe,
+                user=self.request.user
+            )
+            favorite.delete()
+        except Favorites.DoesNotExist:
+            data = {
+                'error': 'Рецепта нет в списке покупок.'
             }
             return JsonResponse(data, status=HTTPStatus.BAD_REQUEST)
         return JsonResponse({}, status=HTTPStatus.NO_CONTENT)

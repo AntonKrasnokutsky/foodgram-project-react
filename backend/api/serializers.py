@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
 from recipes.models import (Ingredients, Favorites, RecipeIngredients, Recipes,
-                            RecipesTag, Tags, Subscriptions)
+                            RecipesTag, Tags, Subscriptions, ShoppingCart)
 from rest_framework import serializers
 
 User = get_user_model()
@@ -305,3 +305,19 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
     def get_recipes_count(self, obj):
         return obj.author.recipes.all().count()
+
+
+class ShoppingCartSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True, source='recipe.id')
+    name = serializers.StringRelatedField(source='recipe.name')
+    image = Base64ImageField(
+        required=False,
+        allow_null=True,
+        source='recipe.image'
+    )
+    cooking_time = serializers.IntegerField(read_only=True, source='recipe.cooking_time')
+
+    class Meta:
+        model = ShoppingCart
+        fields = ['id', 'name', 'image', 'cooking_time', ]
+        read_only_fields = ['id', 'name', 'image', 'cooking_time', ]
