@@ -36,7 +36,7 @@ class Ingredients(models.Model):
         verbose_name_plural = 'Ингридиенты'
 
     def __str__(self, *args, **kwargs):
-        return self.name
+        return f'{self.name}, {self.measurement_unit}'
 
 
 class Subscriptions(models.Model):
@@ -143,14 +143,10 @@ class Favorites(models.Model):
         ordering = ['recipe', ]
         verbose_name = 'Избранный'
         verbose_name_plural = 'Избранные'
-        # unique_together = ('recipe', 'user')
         constraints = [
             models.UniqueConstraint(fields=['recipe', 'user'],
-                                    name='recipe_and_user_uniq')
+                                    name='favorites_recipe_and_user_uniq')
         ]
-
-    # def __str__(self, *args, **kwargs):
-    #     return self.recipe.name
 
 
 class ShoppingCart(models.Model):
@@ -169,6 +165,10 @@ class ShoppingCart(models.Model):
         ordering = ['recipe', ]
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списоки покупок'
+        constraints = [
+            models.UniqueConstraint(fields=['recipe', 'user'],
+                                    name='shopping_cart_recipe_and_user_uniq')
+        ]
 
     def __str__(self, *args, **kwargs):
         return self.recipe.name

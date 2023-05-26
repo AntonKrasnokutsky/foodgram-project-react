@@ -315,7 +315,10 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
         allow_null=True,
         source='recipe.image'
     )
-    cooking_time = serializers.IntegerField(read_only=True, source='recipe.cooking_time')
+    cooking_time = serializers.IntegerField(
+        read_only=True,
+        source='recipe.cooking_time'
+    )
 
     class Meta:
         model = ShoppingCart

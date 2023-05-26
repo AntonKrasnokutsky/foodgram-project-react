@@ -19,7 +19,6 @@ router.register(
 )
 
 urlpatterns = [
-    path('', include(router.urls)),
     path(
         'users/subscriptions/',
         SubscribeViewSet.as_view({'get': 'list'})
@@ -47,4 +46,5 @@ urlpatterns = [
             'post': 'create',
             'delete': 'destroy'
         })),
+    path('', include(router.urls)),
 ]

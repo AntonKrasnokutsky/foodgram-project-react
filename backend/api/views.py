@@ -1,16 +1,19 @@
 from http import HTTPStatus
+from pathlib import Path
+from fpdf import FPDF
 
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from recipes.models import Favorites, Ingredients, Recipes, Tags, Subscriptions, ShoppingCart
+from recipes.models import (Favorites, Ingredients, Recipes, ShoppingCart,
+                            Subscriptions, Tags)
 from rest_framework import filters, mixins, viewsets
 from rest_framework.pagination import LimitOffsetPagination
 
 from .serializers import (FavoritesSerializer, IngredientsSerializer,
-                          RecepiesSerializer, SubscribeSerializer,
-                          TagsSerializer, ShoppingCartSerializer)
+                          RecepiesSerializer, ShoppingCartSerializer,
+                          SubscribeSerializer, TagsSerializer)
 
 User = get_user_model()
 
@@ -153,8 +156,64 @@ class ShoppingCartViewSet(
     def recipe(self):
         return get_object_or_404(Recipes, pk=self.kwargs.get('recipe_id'))
 
+    @property
+    def get_ingridients(self, *args, **kwargs):
+        recipes = self.request.user.shopping_cart.filter()
+        ingredients = {}
+        for recipe in recipes:
+            for recipe_ingredient in recipe.recipe.ingredients.all():
+                if recipe_ingredient.ingredient in ingredients:
+                    ingredients[
+                        recipe_ingredient.ingredient
+                    ] += recipe_ingredient.amount
+                else:
+                    ingredients[
+                        recipe_ingredient.ingredient
+                    ] = recipe_ingredient.amount
+        return ingredients
+
+    def create_pdf(self, ingredients, *args, **kwargs):
+        result_file = Path("output.pdf")
+
+        print(ingredients)
+        pdf = FPDF(format='a4', unit='mm')
+        pdf.add_page()
+        pdf.add_font('DejaVu', '', 'DejaVuSerif.ttf', uni=True)
+        pdf.set_font('DejaVu', size=14)
+        # with pdf.table() as table:
+        #     for ingredient, amount in ingredients.items():
+        #         data_row = [ingredient.name, ingredient.measurement_unit, amount]
+        #         row = table.row()
+        #         for datum in data_row:
+        #             row.cell(datum)
+        for ingredient, amount in ingredients.items():
+            text = f'{ingredient.name}, {ingredient.measurement_unit}: {amount}'
+            pdf.cell(200, 10, txt=text, ln=1, align="J")
+        print(pdf)
+        pdf.output(result_file)
+
+        # pdf = Document()
+        # page = Page()
+        # pdf.add_page(page)
+        # layout = SingleColumnLayout(page)
+        # for ingredient, amount in ingredients.items():
+        #     text = f'{amount}'
+        #     layout.add(Paragraph(text, font='Times-Roman', font_size=Decimal(20)))
+        #     # print(ingredient, amount)
+
+        # print(result_file)
+        # with open(Path(result_file), "wb") as pdf_file_handle:
+        #     PDF.dumps(pdf_file_handle, pdf)
+        return result_file
+
+    def list(self, *args, **kwargs):
+        shopping_cart = self.create_pdf(self.get_ingridients)
+        print(shopping_cart)
+        return super().list(self.request, *args, **kwargs)
+        # return self.create_pdf()
+
     def get_queryset(self):
-        user = get_object_or_404(User, pk=self.request.user)
+        user = get_object_or_404(User, pk=self.request.user.id)
         return user.shopping_cart.all()
 
     def create(self, request, *args, **kwargs):
