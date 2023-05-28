@@ -1,6 +1,7 @@
+import os
 from http import HTTPStatus
-from pathlib import Path
 from fpdf import FPDF
+from django.http import FileResponse
 
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse
@@ -8,14 +9,27 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from recipes.models import (Favorites, Ingredients, Recipes, ShoppingCart,
                             Subscriptions, Tags)
-from rest_framework import filters, mixins, viewsets
+from rest_framework import filters, mixins, viewsets, renderers
 from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.decorators import action
 
 from .serializers import (FavoritesSerializer, IngredientsSerializer,
                           RecepiesSerializer, ShoppingCartSerializer,
                           SubscribeSerializer, TagsSerializer)
 
+from foodgram.settings import MEDIA_ROOT
 User = get_user_model()
+
+
+class PassthroughRenderer(renderers.BaseRenderer):
+    """
+        Return data as-is. View should supply a Response.
+    """
+    media_type = ''
+    format = ''
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        return data
 
 
 class IngredientsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
@@ -87,6 +101,48 @@ class RecipesViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('author', )    # 'tags')
 
+    # @property
+    # def get_ingridients(self, *args, **kwargs):
+    #     recipes = self.request.user.shopping_cart.filter()
+    #     ingredients = {}
+    #     for recipe in recipes:
+    #         for recipe_ingredient in recipe.recipe.ingredients.all():
+    #             if recipe_ingredient.ingredient in ingredients:
+    #                 ingredients[
+    #                     recipe_ingredient.ingredient
+    #                 ] += recipe_ingredient.amount
+    #             else:
+    #                 ingredients[
+    #                     recipe_ingredient.ingredient
+    #                 ] = recipe_ingredient.amount
+    #     return ingredients
+
+    # def create_pdf(self, ingredients, *args, **kwargs):
+    #     result_file = os.path.join(
+    #         MEDIA_ROOT,
+    #         f'{self.request.user.username}shopping_cart.pdf'
+    #     )
+    #     pdf = FPDF(format='a4', unit='mm')
+    #     pdf.add_page()
+    #     pdf.add_font('DejaVu', '', 'DejaVuSerif.ttf', uni=True)
+    #     pdf.set_font('DejaVu', size=14)
+    #     for ingredient, amount in ingredients.items():
+    #         text = (f'{ingredient.name}, '
+    #                 f'{ingredient.measurement_unit}: {amount}')
+    #         pdf.cell(200, 10, txt=text, ln=1, align="J")
+    #     pdf.output(result_file)
+    #     return result_file
+
+    # @action(methods=['get'], detail=True, renderer_classes=(PassthroughRenderer,), url_path='download_shopping_cart')
+    # def download_shopping_cart(self, *args, **kwargs):
+    #     file = self.create_pdf(self.get_ingridients)
+    #     file_handle = file.open()
+    #     response = FileResponse(file_handle, content_type='whatever')
+    #     response['Content-Length'] = file.size
+    #     response['Content-Disposition'] = 'attachment; filename="%s"' % file.name
+
+    #     return response
+        
 
 class SubscribeViewSet(
     mixins.ListModelMixin,
@@ -173,44 +229,50 @@ class ShoppingCartViewSet(
         return ingredients
 
     def create_pdf(self, ingredients, *args, **kwargs):
-        result_file = Path("output.pdf")
-
-        print(ingredients)
+        file_name = f'{self.request.user.username}shopping_cart.pdf'
+        file_path = os.path.join(
+            MEDIA_ROOT,
+            file_name
+        )
         pdf = FPDF(format='a4', unit='mm')
         pdf.add_page()
         pdf.add_font('DejaVu', '', 'DejaVuSerif.ttf', uni=True)
         pdf.set_font('DejaVu', size=14)
-        # with pdf.table() as table:
-        #     for ingredient, amount in ingredients.items():
-        #         data_row = [ingredient.name, ingredient.measurement_unit, amount]
-        #         row = table.row()
-        #         for datum in data_row:
-        #             row.cell(datum)
         for ingredient, amount in ingredients.items():
-            text = f'{ingredient.name}, {ingredient.measurement_unit}: {amount}'
+            text = (f'{ingredient.name}, '
+                    f'{ingredient.measurement_unit}: {amount}')
             pdf.cell(200, 10, txt=text, ln=1, align="J")
-        print(pdf)
-        pdf.output(result_file)
+        pdf.output(file_path)
+        return file_name
 
-        # pdf = Document()
-        # page = Page()
-        # pdf.add_page(page)
-        # layout = SingleColumnLayout(page)
-        # for ingredient, amount in ingredients.items():
-        #     text = f'{amount}'
-        #     layout.add(Paragraph(text, font='Times-Roman', font_size=Decimal(20)))
-        #     # print(ingredient, amount)
-
-        # print(result_file)
-        # with open(Path(result_file), "wb") as pdf_file_handle:
-        #     PDF.dumps(pdf_file_handle, pdf)
-        return result_file
+    def create_txt(self, ingredients, *args, **kwargs):
+        file_name = f'{self.request.user.username}shopping_cart.pdf'
+        file_path = os.path.join(
+            MEDIA_ROOT,
+            file_name
+        )
+        f = open(file_path, 'w')
+        # with open(file_path, 'w') as f:
+        for ingredient, amount in ingredients.items():
+            text = (f'{ingredient.name}, '
+                    f'{ingredient.measurement_unit}: {amount}')
+            f.write(text)
+        f.close()
+        return file_name
 
     def list(self, *args, **kwargs):
-        shopping_cart = self.create_pdf(self.get_ingridients)
-        print(shopping_cart)
-        return super().list(self.request, *args, **kwargs)
-        # return self.create_pdf()
+        file_name = self.create_txt(self.get_ingridients)
+        file_path = os.path.join(
+            MEDIA_ROOT,
+            file_name
+        )
+        print(file_path)
+        file_handle = open(file_path, 'r')
+        response = FileResponse(file_handle, content_type='whatever')
+        # response['Content-Length'] = file.size
+        response['Content-Disposition'] = 'attachment; filename="%s"' % file_handle.name
+
+        return response
 
     def get_queryset(self):
         user = get_object_or_404(User, pk=self.request.user.id)

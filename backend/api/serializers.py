@@ -309,8 +309,9 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
 class ShoppingCartSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True, source='recipe.id')
-    name = serializers.StringRelatedField(source='recipe.name')
+    name = serializers.StringRelatedField(read_only=True, source='recipe.name')
     image = Base64ImageField(
+        read_only=True,
         required=False,
         allow_null=True,
         source='recipe.image'
