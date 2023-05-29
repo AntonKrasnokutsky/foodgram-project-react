@@ -21,7 +21,11 @@ from foodgram.settings import MEDIA_ROOT
 User = get_user_model()
 
 
-class IngredientsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+class IngredientsViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet
+):
     queryset = Ingredients.objects.all()
     serializer_class = IngredientsSerializer
     pagination_class = None
@@ -29,7 +33,11 @@ class IngredientsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     filterset_fields = ['name', ]
 
 
-class TagsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+class TagsViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet
+):
     queryset = Tags.objects.all()
     serializer_class = TagsSerializer
     pagination_class = None

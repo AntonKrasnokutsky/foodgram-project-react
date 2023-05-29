@@ -145,11 +145,19 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
+        # 'rest_framework.permissions.AllowAny',
         'users.permissions.AuthorOrAdminOrReadOnly',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 6
 }
 
-
+DJOSER = {
+    "PERMISSIONS": {
+        'user': ['users.permissions.AuthorOrAdminOrReadOnly']
+    },
+    "SERIALIZERS": {
+        'user': 'users.serializers.SpecialUserSerializer',
+    }
+}
 AUTH_USER_MODEL = 'users.CustomUser'
