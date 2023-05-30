@@ -1,23 +1,23 @@
 import os
 from http import HTTPStatus
-# from fpdf import FPDF
-from django.http import HttpResponse
 
 from django.contrib.auth import get_user_model
-from django.http import JsonResponse
+# from fpdf import FPDF
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, mixins, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.pagination import LimitOffsetPagination
+
+from foodgram.settings import MEDIA_ROOT
 from recipes.models import (Favorites, Ingredients, Recipes, ShoppingCart,
                             Subscriptions, Tags)
-from rest_framework import filters, mixins, viewsets, status
-from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.decorators import action
 
 from .serializers import (FavoritesSerializer, IngredientsSerializer,
                           RecepiesSerializer, ShoppingCartSerializer,
                           SubscribeSerializer, TagsSerializer)
 
-from foodgram.settings import MEDIA_ROOT
 User = get_user_model()
 
 
@@ -53,10 +53,9 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self, *args, **kwargs):
         if self.action == 'shopping_cart':
             return ShoppingCartSerializer
-        elif self.action == 'favorite':
+        if self.action == 'favorite':
             return FavoritesSerializer
-        else:
-            return self.serializer_class
+        return self.serializer_class
 
     @property
     def get_ingridients(self, *args, **kwargs):
@@ -235,6 +234,7 @@ class SubscribeViewSet(
             return super().permission_denied(self.request)
 
         serializer.save(author=self.author, user=self.request.user)
+        return None
 
     def destroy(self, request, *args, **kwargs):
         try:

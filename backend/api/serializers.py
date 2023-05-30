@@ -3,9 +3,10 @@ import base64
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
-from recipes.models import (Ingredients, Favorites, RecipeIngredients, Recipes,
-                            RecipesTag, Tags, Subscriptions, ShoppingCart)
 from rest_framework import serializers
+
+from recipes.models import (Favorites, Ingredients, RecipeIngredients, Recipes,
+                            RecipesTag, ShoppingCart, Subscriptions, Tags)
 
 User = get_user_model()
 
@@ -106,11 +107,10 @@ class RecepiesSerializer(serializers.ModelSerializer):
         return get_object_or_404(Recipes, id=obj.id)
 
     def get_user(self):
-        user = None
         request = self.context.get('request')
         if request and hasattr(request, 'user'):
-            user = request.user
-        return user
+            return request.user
+        return None
 
     def get_is_favorited(self, obj):
         user = self.get_user()
