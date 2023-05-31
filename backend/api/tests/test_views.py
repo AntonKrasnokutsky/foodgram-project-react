@@ -4,7 +4,8 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from recipes.models import Ingredients, Recipes, Tags
+from recipes.models import (Ingredients, RecipeIngredients, Recipes,
+                            RecipesTag, Tags)
 
 User = get_user_model()
 client = APIClient()
@@ -21,13 +22,20 @@ class GuestUsersTestCase(TestCase):
             last_name='test_last_name',
             password='testPassword123',
         )
-        tag = Tags.objects.create(
+        cls.author = {
+            'email': 'a@a.ru',
+            'username': 'test_user',
+            'first_name': 'test_first_name',
+            'last_name': 'test_last_name',
+            'is_subscribed': False,
+        }
+        tag1 = Tags.objects.create(
             name='Тег1',
             color='#aabbcc',
             slug='tag1',
         )
         cls.tag1 = {
-            'id': tag.id,
+            'id': tag1.id,
             'name': 'Тег1',
             'color': '#aabbcc',
             'slug': 'tag1',
@@ -55,12 +63,12 @@ class GuestUsersTestCase(TestCase):
             'slug': 'tag3',
         }
 
-        ingredient = Ingredients.objects.create(
+        ingredient1 = Ingredients.objects.create(
             name='Ингридиент 1',
             measurement_unit='кг.'
         )
         cls.ingredient1 = {
-            'id': ingredient.id,
+            'id': ingredient1.id,
             'name': 'Ингридиент 1',
             'measurement_unit': 'кг.',
         }
@@ -86,13 +94,48 @@ class GuestUsersTestCase(TestCase):
             content=cls.small_gif,
             content_type='image/gif'
         )
-        Recipes.objects.create(
+        cls.recipe_obj = Recipes.objects.create(
             author=cls.test_user,
             name='Тестоый рецепт',
             image=cls.uploaded,
             text='Описание тестового рецепта',
             cooking_time=1
         )
+        RecipesTag.objects.create(
+            recipe=cls.recipe_obj,
+            tag=tag1,
+        )
+        recipe_ingredient = RecipeIngredients.objects.create(
+            recipe=cls.recipe_obj,
+            ingredient=ingredient1,
+            amount=1,
+        )
+        cls.recipe = {
+            'id': cls.recipe_obj.id,
+            'tags': [
+                {
+                    'id': tag1.id,
+                    'name': 'Тег1',
+                    'color': '#aabbcc',
+                    'slug': 'tag1',
+                },
+            ],
+            'author': cls.author,
+            'ingredients': [
+                {
+                    'id': ingredient1.id,
+                    'name': ingredient1.name,
+                    'measurement_unit': ingredient1.measurement_unit,
+                    'amount': recipe_ingredient.amount
+                }
+            ],
+            "is_favorited": False,
+            "is_in_shopping_cart": False,
+            "name": cls.recipe_obj.name,
+            "image": cls.recipe_obj.image,
+            "text": cls.recipe_obj.text,
+            "cooking_time": cls.recipe_obj.cooking_time
+        }
 
     def test_guest_user_registrate(self):
         path = '/api/users/'
@@ -165,3 +208,45 @@ class GuestUsersTestCase(TestCase):
         path = '/api/recipes/'
         request = client.get(path)
         self.assertEqual(request.status_code, status.HTTP_200_OK)
+
+    # def test_guest_user_get_recipe(self, *args, **kwargs):
+    #     path = f'/api/recipes/{self.recipe_obj.id}/'
+    #     request = client.get(path)
+    #     self.assertEqual(request.status_code, status.HTTP_200_OK)
+    #     self.assertEqual(request.data, self.recipe)
+
+    def test_guest_user_unauthorized_error_post(self, *args, **kwargs):
+        paths_post = [
+            '/api/recipes/',
+            f'/api/recipes/{self.recipe_obj.id}/shopping_cart/',
+            f'/api/recipes/{self.recipe_obj.id}/favorite/',
+            f'/api/users/{self.test_user.id}/subscribe/',
+        ]
+        for path in paths_post:
+            request = client.post(path)
+            self.assertEqual(request.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_guest_user_unauthorized_error_delete(self, *args, **kwargs):
+        paths_post = [
+            f'/api/recipes/{self.recipe_obj.id}/',
+            f'/api/recipes/{self.recipe_obj.id}/shopping_cart/',
+            f'/api/recipes/{self.recipe_obj.id}/favorite/',
+            f'/api/users/{self.test_user.id}/subscribe/',
+        ]
+        for path in paths_post:
+            request = client.delete(path)
+            self.assertEqual(request.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_guest_user_unauthorized_error_patch(self, *args, **kwargs):
+        path = f'/api/recipes/{self.recipe_obj.id}/'
+        request = client.patch(path)
+        self.assertEqual(request.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_guest_user_unauthorized_error_get(self, *args, **kwargs):
+        paths_post = [
+            '/api/recipes/download_shopping_cart/',
+            '/api/users/subscriptions/',
+        ]
+        for path in paths_post:
+            request = client.get(path)
+            self.assertEqual(request.status_code, status.HTTP_401_UNAUTHORIZED)

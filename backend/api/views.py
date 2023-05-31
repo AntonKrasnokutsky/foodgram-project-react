@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, mixins, status, viewsets
+from rest_framework import filters, mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 
@@ -111,6 +111,11 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     @action(methods=['get'], detail=False, url_path=r'download_shopping_cart')
     def download_shopping_cart(self, *args, **kwargs):
+        if not self.request.user.is_authenticated:
+            data = {
+                'detail': 'Учетные данные не были предоставлены.'
+            }
+            return JsonResponse(data, status=status.HTTP_401_UNAUTHORIZED)
         file_name = self.create_txt(self.get_ingridients)
         file_name = 'vasya.pupkinshopping_cart.txt'
         file_path = os.path.join(
@@ -197,14 +202,10 @@ class RecipesViewSet(viewsets.ModelViewSet):
         return JsonResponse({}, status=HTTPStatus.NO_CONTENT)
 
 
-class SubscribeViewSet(
-    mixins.ListModelMixin,
-    mixins.CreateModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet
-):
+class SubscribeViewSet(viewsets.ModelViewSet):
     pagination_class = LimitOffsetPagination
     serializer_class = SubscribeSerializer
+    permission_classes = [permissions.IsAuthenticated, ]
 
     def get_queryset(self):
         return self.request.user.publisher.all()
