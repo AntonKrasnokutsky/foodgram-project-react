@@ -82,7 +82,6 @@ class Recipes(models.Model):
             'Время готовки должно быть больше 0 минут.'
         )]
     )
-    tags = models.ManyToManyField(Tags, through='RecipesTag')
 
     class Meta:
         ordering = ['name', ]
@@ -94,7 +93,11 @@ class Recipes(models.Model):
 
 
 class RecipesTag(models.Model):
-    recipe = models.ForeignKey('Recipes', on_delete=models.CASCADE)
+    recipe = models.ForeignKey(
+        'Recipes',
+        on_delete=models.CASCADE,
+        related_name='tags'
+    )
     tag = models.ForeignKey('Tags', on_delete=models.CASCADE)
 
     class Meta:

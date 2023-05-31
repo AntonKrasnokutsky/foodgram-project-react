@@ -5,6 +5,7 @@ from recipes.models import (Ingredients, RecipeIngredients, Recipes,
                             RecipesTag, Tags)
 from rest_framework import status
 from rest_framework.test import APIClient
+from django.urls import reverse
 
 User = get_user_model()
 client = APIClient()
@@ -137,7 +138,6 @@ class GuestUsersTestCase(TestCase):
         }
 
     def test_guest_user_registrate(self):
-        path = '/api/users/'
         data = {
             'email': 'vpupkin@yande.ru',
             'username': 'vasya.pupkn',
@@ -145,7 +145,10 @@ class GuestUsersTestCase(TestCase):
             'last_name': 'Пупки',
             'password': 'Qwerty12'
         }
-        request = client.post(path, data)
+        request = client.post(
+            reverse('users:foodgramuser-list'),
+            data
+        )
         user = User.objects.last()
         data_request = {
             'email': 'vpupkin@yande.ru',
@@ -160,8 +163,11 @@ class GuestUsersTestCase(TestCase):
                 self.assertEqual(request.data[field], value)
 
     def test_guest_user_get_user_profile(self, *args, **kwargs):
-        path = f'/api/users/{self.test_user.id}/'
-        request = client.get(path)
+        request = client.get(
+            reverse(
+                'users:foodgramuser-detail',
+                args=[self.test_user.id]
+            ))
         data_request = {
             "email": self.test_user.email,
             "id": self.test_user.id,
@@ -176,44 +182,47 @@ class GuestUsersTestCase(TestCase):
                 self.assertEqual(request.data[field], value)
 
     def test_guest_user_get_tags_list(self, *args, **kwargs):
-        path = '/api/tags/'
-        request = client.get(path)
+        request = client.get(reverse('api:tags-list'))
 
         self.assertEqual(request.status_code, status.HTTP_200_OK)
         data_request = [self.tag1, self.tag2, self.tag3]
         self.assertEqual(request.data, data_request)
 
     def test_guest_user_get_tag(self, *args, **kwargs):
-        path = f'/api/tags/{self.tag1["id"]}/'
-        request = client.get(path)
+        request = client.get(
+            reverse(
+                'api:tags-detail',
+                args=[self.tag1["id"]]
+            ))
         self.assertEqual(request.status_code, status.HTTP_200_OK)
         self.assertEqual(request.data, self.tag1)
 
     def test_guest_user_get_ingredients_list(self, *args, **kwargs):
-        path = '/api/ingredients/'
-        request = client.get(path)
+        request = client.get(reverse('api:ingredients-list'))
 
         self.assertEqual(request.status_code, status.HTTP_200_OK)
         data_request = [self.ingredient1, self.ingredient2]
         self.assertEqual(request.data, data_request)
 
     def test_guest_user_get_ingredient(self, *args, **kwargs):
-        path = f'/api/ingredients/{self.ingredient1["id"]}/'
-        request = client.get(path)
+        request = client.get(
+            reverse(
+                'api:ingredients-detail',
+                args=[self.ingredient1["id"]]
+            ))
         self.assertEqual(request.status_code, status.HTTP_200_OK)
         self.assertEqual(request.data, self.ingredient1)
 
     def test_guest_user_get_recipes_list(self, *args, **kwargs):
-        path = '/api/recipes/'
-        request = client.get(path)
+        request = client.get(reverse('api:recipes-list'))
         self.assertEqual(request.status_code, status.HTTP_200_OK)
 
     def test_guest_user_unauthorized_error_post(self, *args, **kwargs):
         paths_post = [
-            '/api/recipes/',
-            f'/api/recipes/{self.recipe_obj.id}/shopping_cart/',
-            f'/api/recipes/{self.recipe_obj.id}/favorite/',
-            f'/api/users/{self.test_user.id}/subscribe/',
+            reverse('api:recipes-list'),
+            reverse('api:recipes-shopping-cart', args=[self.recipe_obj.id]),
+            reverse('api:recipes-favorite', args=[self.recipe_obj.id]),
+            reverse('api:author-subscribe', args=[self.recipe_obj.id]),
         ]
         for path in paths_post:
             request = client.post(path)
@@ -221,24 +230,27 @@ class GuestUsersTestCase(TestCase):
 
     def test_guest_user_unauthorized_error_delete(self, *args, **kwargs):
         paths_post = [
-            f'/api/recipes/{self.recipe_obj.id}/',
-            f'/api/recipes/{self.recipe_obj.id}/shopping_cart/',
-            f'/api/recipes/{self.recipe_obj.id}/favorite/',
-            f'/api/users/{self.test_user.id}/subscribe/',
+            reverse('api:recipes-detail', args=[self.recipe_obj.id]),
+            reverse('api:recipes-shopping-cart', args=[self.recipe_obj.id]),
+            reverse('api:recipes-favorite', args=[self.recipe_obj.id]),
+            reverse('api:author-subscribe', args=[self.recipe_obj.id]),
         ]
         for path in paths_post:
             request = client.delete(path)
             self.assertEqual(request.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_guest_user_unauthorized_error_patch(self, *args, **kwargs):
-        path = f'/api/recipes/{self.recipe_obj.id}/'
-        request = client.patch(path)
+        request = client.patch(
+            reverse(
+                'api:recipes-detail',
+                args=[self.recipe_obj.id]
+            ),)
         self.assertEqual(request.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_guest_user_unauthorized_error_get(self, *args, **kwargs):
         paths_post = [
-            '/api/recipes/download_shopping_cart/',
-            '/api/users/subscriptions/',
+            reverse('api:recipes-download-shopping-cart'),
+            reverse('api:author-subscribe'),
         ]
         for path in paths_post:
             request = client.get(path)

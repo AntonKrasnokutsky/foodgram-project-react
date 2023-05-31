@@ -89,6 +89,7 @@ class RecipeTagsSerializer(serializers.ModelSerializer):
 
 
 class RecipeIngredientsSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source='ingredient.id')
     name = serializers.StringRelatedField(source='ingredient.name')
     measurement_unit = serializers.StringRelatedField(
         source='ingredient.measurement_unit'
@@ -102,10 +103,18 @@ class RecipeIngredientsSerializer(serializers.ModelSerializer):
 class RecepiesSerializer(serializers.ModelSerializer):
     author = AuthorSerializer(read_only=True)
     image = Base64ImageField(required=False, allow_null=True)
-    tags = RecipeTagsSerializer(many=True)
     ingredients = RecipeIngredientsSerializer(many=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if (
+            'view' in self.context
+            and self.context['view'].action != 'create'
+            and self.context['view'].action != 'partial_update'
+        ):
+            self.fields.update({"tags": RecipeTagsSerializer(many=True)})
 
     class Meta:
         model = Recipes
@@ -143,8 +152,8 @@ class RecepiesSerializer(serializers.ModelSerializer):
     def validate_ingredients(self, value, *args, **kwargs):
         ingredients = self.initial_data.get('ingredients')
         value = []
-        ingridient = {}
         for recipe_ingredient in ingredients:
+            ingridient = {}
             if 'id' not in recipe_ingredient:
                 raise serializers.ValidationError(
                     'Отсутствуют ожидаемые поля "id".'
@@ -165,8 +174,8 @@ class RecepiesSerializer(serializers.ModelSerializer):
             ingridient['amount'] = recipe_ingredient['amount']
             value.append(ingridient)
         return value
-    
-    def validate_tag(self, value, *args, **kwargs):
+
+    def validate_tags(self, value, *args, **kwargs):
         tags = self.initial_data.get('tags')
         if not all(map(lambda x: isinstance(x, int), tags)):
             raise serializers.ValidationError(
@@ -191,10 +200,14 @@ class RecepiesSerializer(serializers.ModelSerializer):
                 amount=recipe_ingredient['amount']
             )
 
+    def validate(self, attrs):
+        self.fields.update({"tags": RecipeTagsSerializer(many=True)})
+        return super().validate(attrs)
+
     def create(self, *args, **kwargs):
         tags = self.validated_data.pop('tags')
         ingredients = self.validated_data.pop('ingredients')
-        author = self.get_user()
+        author = self.__current_user()
         recipe = Recipes.objects.create(**self.validated_data, author=author)
 
         self.__add_recipe_tags(recipe, tags)
@@ -217,8 +230,9 @@ class RecepiesSerializer(serializers.ModelSerializer):
                 tags.remove(recipe_tag.tag.id)
                 recipe_tags.remove(recipe_tag)
 
-        for recipe_tag in recipe_tags:
-            recipe_tag.delete()
+        RecipesTag.objects.filter(
+            pk__in=map(lambda tag: tag.id, recipe_tags)
+        ).delete()
 
         self.__add_recipe_tags(self.instance, tags)
 
@@ -226,12 +240,11 @@ class RecepiesSerializer(serializers.ModelSerializer):
             RecipeIngredients.objects.filter(
                 recipe=self.instance.id
             ))
-
         for recipe_ingredient in recipe_ingredients:
             ingredient = next(
                 (
-                    item for item in ingredients if (
-                        item["id"] == recipe_ingredient.ingredient.id
+                    ingredient for ingredient in ingredients if (
+                        ingredient["id"] == recipe_ingredient.ingredient.id
                     )
                 ),
                 False
@@ -240,8 +253,9 @@ class RecepiesSerializer(serializers.ModelSerializer):
                 ingredients.remove(ingredient)
                 recipe_ingredients.remove(recipe_ingredient)
 
-        for recipe_ingredient in recipe_ingredients:
-            recipe_ingredient.delete()
+        RecipeIngredients.objects.filter(
+            pk__in=map(lambda ingredient: ingredient.id, recipe_ingredients)
+        ).delete()
 
         self.__add_recipe_ingridients(self.instance, ingredients)
 
