@@ -5,7 +5,6 @@ from recipes.models import (Ingredients, RecipeIngredients, Recipes,
                             RecipesTag, Tags)
 from rest_framework import status
 from rest_framework.test import APIClient
-from django.urls import reverse
 
 User = get_user_model()
 client = APIClient()

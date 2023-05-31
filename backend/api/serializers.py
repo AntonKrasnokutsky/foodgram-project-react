@@ -50,9 +50,12 @@ class AuthorSerializer(serializers.ModelSerializer):
 class Base64ImageField(serializers.ImageField):
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
+            format, image_string = data.split(';base64,')
             ext = format.split('/')[-1]
-            data = ContentFile(base64.b64decode(imgstr), name=f'temp.{ext}')
+            data = ContentFile(
+                base64.b64decode(image_string),
+                name=f'temp.{ext}'
+            )
         return super().to_internal_value(data)
 
 
@@ -74,7 +77,18 @@ class AmountSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class RecepiesIngredientsSerializer(serializers.ModelSerializer):
+class RecipeTagsSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source='tag.id')
+    name = serializers.StringRelatedField(source='tag.name')
+    color = serializers.StringRelatedField(source='tag.color')
+    slug = serializers.SlugField(source='tag.slug')
+
+    class Meta:
+        model = RecipesTag
+        fields = ['id', 'name', 'color', 'slug']
+
+
+class RecipeIngredientsSerializer(serializers.ModelSerializer):
     name = serializers.StringRelatedField(source='ingredient.name')
     measurement_unit = serializers.StringRelatedField(
         source='ingredient.measurement_unit'
@@ -88,8 +102,8 @@ class RecepiesIngredientsSerializer(serializers.ModelSerializer):
 class RecepiesSerializer(serializers.ModelSerializer):
     author = AuthorSerializer(read_only=True)
     image = Base64ImageField(required=False, allow_null=True)
-    tags = TagsSerializer(read_only=True, many=True)
-    ingredients = RecepiesIngredientsSerializer(many=True)
+    tags = RecipeTagsSerializer(many=True)
+    ingredients = RecipeIngredientsSerializer(many=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
 
@@ -151,6 +165,14 @@ class RecepiesSerializer(serializers.ModelSerializer):
             ingridient['amount'] = recipe_ingredient['amount']
             value.append(ingridient)
         return value
+    
+    def validate_tag(self, value, *args, **kwargs):
+        tags = self.initial_data.get('tags')
+        if not all(map(lambda x: isinstance(x, int), tags)):
+            raise serializers.ValidationError(
+                'Элементы дожны быть целыми числами.'
+            )
+        return tags
 
     def __add_recipe_tags(self, recipe, tags, *args, **kwargs):
         for tag in tags:
@@ -170,11 +192,7 @@ class RecepiesSerializer(serializers.ModelSerializer):
             )
 
     def create(self, *args, **kwargs):
-        tags = self.initial_data.get('tags')
-        if not all(map(lambda x: isinstance(x, int), tags)):
-            raise serializers.ValidationError(
-                'Элементы дожны быть целыми числами.'
-            )
+        tags = self.validated_data.pop('tags')
         ingredients = self.validated_data.pop('ingredients')
         author = self.get_user()
         recipe = Recipes.objects.create(**self.validated_data, author=author)
@@ -185,10 +203,7 @@ class RecepiesSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, *args, **kwargs):
-        tags = self.initial_data.get('tags')
-        if not all(map(lambda x: isinstance(x, int), tags)):
-            raise serializers.ValidationError('Элементы дожны быть целыми '
-                                              'числами.')
+        tags = self.validated_data.pop('tags')
         ingredients = self.validated_data.pop('ingredients')
         super().update(
             instance=self.instance,
@@ -197,12 +212,10 @@ class RecepiesSerializer(serializers.ModelSerializer):
 
         recipe_tags = list(RecipesTag.objects.filter(recipe=self.instance.id))
 
-        for tag in tags:
-            for recipe_tag in recipe_tags:
-                if tag == recipe_tag.tag.id:
-                    tags.remove(tag)
-                    recipe_tags.remove(recipe_tag)
-                    break
+        for recipe_tag in recipe_tags:
+            if recipe_tag.tag.id in tags:
+                tags.remove(recipe_tag.tag.id)
+                recipe_tags.remove(recipe_tag)
 
         for recipe_tag in recipe_tags:
             recipe_tag.delete()
@@ -214,12 +227,18 @@ class RecepiesSerializer(serializers.ModelSerializer):
                 recipe=self.instance.id
             ))
 
-        for ingredient in ingredients:
-            for recipe_ingredient in recipe_ingredients:
-                if ingredient['id'] == recipe_ingredient.ingredient.id:
-                    ingredients.remove(ingredient)
-                    recipe_ingredients.remove(recipe_ingredient)
-                    break
+        for recipe_ingredient in recipe_ingredients:
+            ingredient = next(
+                (
+                    item for item in ingredients if (
+                        item["id"] == recipe_ingredient.ingredient.id
+                    )
+                ),
+                False
+            )
+            if ingredient:
+                ingredients.remove(ingredient)
+                recipe_ingredients.remove(recipe_ingredient)
 
         for recipe_ingredient in recipe_ingredients:
             recipe_ingredient.delete()
