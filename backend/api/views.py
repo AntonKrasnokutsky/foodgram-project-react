@@ -2,7 +2,6 @@ import os
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
-# from fpdf import FPDF
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -11,12 +10,22 @@ from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 
 from foodgram.settings import MEDIA_ROOT
-from recipes.models import (Favorites, Ingredients, Recipes, ShoppingCart,
-                            Subscriptions, Tags)
-
-from .serializers import (FavoritesSerializer, IngredientsSerializer,
-                          RecepiesSerializer, ShoppingCartSerializer,
-                          SubscribeSerializer, TagsSerializer)
+from recipes.models import (
+    Favorites,
+    Ingredients,
+    Recipes,
+    ShoppingCart,
+    Subscriptions,
+    Tags
+)
+from .serializers import (
+    FavoritesSerializer,
+    IngredientsSerializer,
+    RecepiesSerializer,
+    ShoppingCartSerializer,
+    SubscribeSerializer,
+    TagsSerializer
+)
 
 User = get_user_model()
 
@@ -48,7 +57,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     serializer_class = RecepiesSerializer
     pagination_class = LimitOffsetPagination
     filter_backends = (filters.SearchFilter,)
-    search_fields = ('author', )    # 'tags')
+    search_fields = ('author', )
 
     def get_serializer_class(self, *args, **kwargs):
         if self.action == 'shopping_cart':
@@ -77,23 +86,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def recipe(self):
         return get_object_or_404(Recipes, pk=self.kwargs.get('pk'))
 
-    # def create_pdf(self, ingredients, *args, **kwargs):
-    #     file_name = f'{self.request.user.username}shopping_cart.pdf'
-    #     file_path = os.path.join(
-    #         MEDIA_ROOT,
-    #         file_name
-    #     )
-    #     pdf = FPDF(format='a4', unit='mm')
-    #     pdf.add_page()
-    #     pdf.add_font('DejaVu', '', 'DejaVuSerif.ttf', uni=True)
-    #     pdf.set_font('DejaVu', size=14)
-    #     for ingredient, amount in ingredients.items():
-    #         text = (f'{ingredient.name}, '
-    #                 f'{ingredient.measurement_unit}: {amount}')
-    #         pdf.cell(200, 10, txt=text, ln=1, align="J")
-    #     pdf.output(file_path)
-    #     return file_name
-
     def create_txt(self, ingredients, *args, **kwargs):
         file_name = f'{self.request.user.username}shopping_cart.txt'
         file_path = os.path.join(
@@ -117,7 +109,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
             }
             return JsonResponse(data, status=status.HTTP_401_UNAUTHORIZED)
         file_name = self.create_txt(self.get_ingridients)
-        file_name = 'vasya.pupkinshopping_cart.txt'
         file_path = os.path.join(
             MEDIA_ROOT,
             file_name
@@ -220,6 +211,7 @@ class SubscribeViewSet(viewsets.ModelViewSet):
                 'error': 'Нельзя подписаться на себя..'
             }
             return JsonResponse(data, status=HTTPStatus.BAD_REQUEST)
+        
         if Subscriptions.objects.filter(
             author=self.author,
             user=self.request.user

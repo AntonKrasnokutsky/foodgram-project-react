@@ -1,7 +1,14 @@
 from django.contrib import admin
 
-from .models import (Favorites, Ingredients, RecipeIngredients, Recipes,
-                     RecipesTag, Subscriptions, Tags)
+from .models import (
+    Favorites,
+    Ingredients,
+    RecipeIngredients,
+    Recipes,
+    RecipesTag,
+    Subscriptions,
+    Tags,
+)
 
 
 class IngredientsAdmin(admin.ModelAdmin):
@@ -19,7 +26,6 @@ class TagsAdmin(admin.ModelAdmin):
 
 
 class RecipesAdmin(admin.ModelAdmin):
-    # favorite_count = ('get_favorite_count', )
     model = Recipes
     list_display = ['name', 'author', 'favorite_count', ]
     list_filter = ['author', 'name', 'tags', ]

@@ -1,11 +1,11 @@
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
-from rest_framework import status
-from rest_framework.test import APIClient
-
 from recipes.models import (Ingredients, RecipeIngredients, Recipes,
                             RecipesTag, Tags)
+from rest_framework import status
+from rest_framework.test import APIClient
+from django.urls import reverse
 
 User = get_user_model()
 client = APIClient()
@@ -127,7 +127,7 @@ class GuestUsersTestCase(TestCase):
                     'name': ingredient1.name,
                     'measurement_unit': ingredient1.measurement_unit,
                     'amount': recipe_ingredient.amount
-                }
+                },
             ],
             "is_favorited": False,
             "is_in_shopping_cart": False,
@@ -208,12 +208,6 @@ class GuestUsersTestCase(TestCase):
         path = '/api/recipes/'
         request = client.get(path)
         self.assertEqual(request.status_code, status.HTTP_200_OK)
-
-    # def test_guest_user_get_recipe(self, *args, **kwargs):
-    #     path = f'/api/recipes/{self.recipe_obj.id}/'
-    #     request = client.get(path)
-    #     self.assertEqual(request.status_code, status.HTTP_200_OK)
-    #     self.assertEqual(request.data, self.recipe)
 
     def test_guest_user_unauthorized_error_post(self, *args, **kwargs):
         paths_post = [
