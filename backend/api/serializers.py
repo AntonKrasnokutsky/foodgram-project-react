@@ -1,12 +1,21 @@
 import base64
+import numbers
 
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from recipes.models import (Favorites, Ingredients, RecipeIngredients, Recipes,
-                            RecipesTag, ShoppingCart, Subscriptions, Tags)
+from recipes.models import (
+    Favorites,
+    Ingredients,
+    RecipeIngredients,
+    Recipes,
+    RecipesTag,
+    ShoppingCart,
+    Subscriptions,
+    Tags
+)
 
 User = get_user_model()
 
@@ -27,8 +36,8 @@ class AuthorSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         user = None
-        request = self.context.get("request")
-        if request and hasattr(request, "user"):
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
             user = request.user
         if user is None or user.is_anonymous:
             return False
@@ -41,9 +50,12 @@ class AuthorSerializer(serializers.ModelSerializer):
 class Base64ImageField(serializers.ImageField):
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
+            format, image_string = data.split(';base64,')
             ext = format.split('/')[-1]
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
+            data = ContentFile(
+                base64.b64decode(image_string),
+                name=f'temp.{ext}'
+            )
         return super().to_internal_value(data)
 
 
@@ -65,7 +77,19 @@ class AmountSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class RecepiesIngredientsSerializer(serializers.ModelSerializer):
+class RecipeTagsSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source='tag.id')
+    name = serializers.StringRelatedField(source='tag.name')
+    color = serializers.StringRelatedField(source='tag.color')
+    slug = serializers.SlugField(source='tag.slug')
+
+    class Meta:
+        model = RecipesTag
+        fields = ['id', 'name', 'color', 'slug']
+
+
+class RecipeIngredientsSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source='ingredient.id')
     name = serializers.StringRelatedField(source='ingredient.name')
     measurement_unit = serializers.StringRelatedField(
         source='ingredient.measurement_unit'
@@ -79,14 +103,18 @@ class RecepiesIngredientsSerializer(serializers.ModelSerializer):
 class RecepiesSerializer(serializers.ModelSerializer):
     author = AuthorSerializer(read_only=True)
     image = Base64ImageField(required=False, allow_null=True)
-    # Не нашел как написать валидатор для поля tags, если убрать
-    # read_only=True получаю ошибку "Недопустимые данные. Ожидался dictionary,
-    # но был получен int." Изменение валидатора поля и валидатора объекта
-    # результат не изменили
-    tags = TagsSerializer(read_only=True, many=True)
-    ingredients = RecepiesIngredientsSerializer(many=True)
+    ingredients = RecipeIngredientsSerializer(many=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if (
+            'view' in self.context
+            and self.context['view'].action != 'create'
+            and self.context['view'].action != 'partial_update'
+        ):
+            self.fields.update({"tags": RecipeTagsSerializer(many=True)})
 
     class Meta:
         model = Recipes
@@ -103,54 +131,64 @@ class RecepiesSerializer(serializers.ModelSerializer):
             'cooking_time',
         ]
 
-    def get_recipe(self, obj):
-        return get_object_or_404(Recipes, id=obj.id)
-
-    def get_user(self):
+    def __current_user(self):
         request = self.context.get('request')
         if request and hasattr(request, 'user'):
             return request.user
         return None
 
     def get_is_favorited(self, obj):
-        user = self.get_user()
+        user = self.__current_user()
         if user is None or user.is_anonymous:
             return False
-        recipe = self.get_recipe(obj)
-        return recipe.favorites.filter(user=user).exists()
+        return obj.favorites.filter(user=user).exists()
 
     def get_is_in_shopping_cart(self, obj):
-        user = self.get_user()
+        user = self.__current_user()
         if user is None or user.is_anonymous:
             return False
-        recipe = self.get_recipe(obj)
-        return recipe.shopping_cart.filter(user=user).exists()
+        return obj.shopping_cart.filter(user=user).exists()
 
     def validate_ingredients(self, value, *args, **kwargs):
         ingredients = self.initial_data.get('ingredients')
         value = []
-        ingridient = {}
         for recipe_ingredient in ingredients:
-            if ('id' not in recipe_ingredient
-                    or 'amount' not in recipe_ingredient):
-                raise serializers.ValidationError('Отсутствуют ожидаемые поля '
-                                                  '"id" или "amount".')
-            if (not isinstance(recipe_ingredient['id'], int)
-                    or not isinstance(recipe_ingredient['amount'], int)):
-                raise serializers.ValidationError('Значение полей "id" и '
-                                                  '"amount" дожно быть целое '
-                                                  'число.')
+            ingridient = {}
+            if 'id' not in recipe_ingredient:
+                raise serializers.ValidationError(
+                    'Отсутствуют ожидаемые поля "id".'
+                )
+            if 'amount' not in recipe_ingredient:
+                raise serializers.ValidationError(
+                    'Отсутствуют ожидаемые поля "amount".'
+                )
+            if not isinstance(recipe_ingredient['id'], numbers.Number):
+                raise serializers.ValidationError(
+                    'Значение полей "id" дожно быть числом.'
+                )
+            if not isinstance(recipe_ingredient['amount'], numbers.Number):
+                raise serializers.ValidationError(
+                    'Значение полей "amount" дожно быть числом.'
+                )
             ingridient['id'] = recipe_ingredient['id']
             ingridient['amount'] = recipe_ingredient['amount']
             value.append(ingridient)
         return value
 
-    def add_recipe_tags(self, recipe, tags, *args, **kwargs):
+    def validate_tags(self, value, *args, **kwargs):
+        tags = self.initial_data.get('tags')
+        if not all(map(lambda x: isinstance(x, int), tags)):
+            raise serializers.ValidationError(
+                'Элементы дожны быть целыми числами.'
+            )
+        return tags
+
+    def __add_recipe_tags(self, recipe, tags, *args, **kwargs):
         for tag in tags:
             tag = get_object_or_404(Tags, pk=tag)
             RecipesTag.objects.create(recipe=recipe, tag=tag)
 
-    def add_recipe_ingridients(self, recipe, ingredients, *args, **kwargs):
+    def __add_recipe_ingridients(self, recipe, ingredients, *args, **kwargs):
         for recipe_ingredient in ingredients:
             ingredient = get_object_or_404(
                 Ingredients,
@@ -162,25 +200,23 @@ class RecepiesSerializer(serializers.ModelSerializer):
                 amount=recipe_ingredient['amount']
             )
 
+    def validate(self, attrs):
+        self.fields.update({"tags": RecipeTagsSerializer(many=True)})
+        return super().validate(attrs)
+
     def create(self, *args, **kwargs):
-        tags = self.initial_data.get('tags')
-        if not all(map(lambda x: isinstance(x, int), tags)):
-            raise serializers.ValidationError('Элементы дожны быть целыми '
-                                              'числами.')
+        tags = self.validated_data.pop('tags')
         ingredients = self.validated_data.pop('ingredients')
-        author = self.get_user()
+        author = self.__current_user()
         recipe = Recipes.objects.create(**self.validated_data, author=author)
 
-        self.add_recipe_tags(recipe, tags)
-        self.add_recipe_ingridients(recipe, ingredients)
+        self.__add_recipe_tags(recipe, tags)
+        self.__add_recipe_ingridients(recipe, ingredients)
 
         return recipe
 
     def update(self, *args, **kwargs):
-        tags = self.initial_data.get('tags')
-        if not all(map(lambda x: isinstance(x, int), tags)):
-            raise serializers.ValidationError('Элементы дожны быть целыми '
-                                              'числами.')
+        tags = self.validated_data.pop('tags')
         ingredients = self.validated_data.pop('ingredients')
         super().update(
             instance=self.instance,
@@ -189,58 +225,57 @@ class RecepiesSerializer(serializers.ModelSerializer):
 
         recipe_tags = list(RecipesTag.objects.filter(recipe=self.instance.id))
 
-        for tag in tags:
-            for recipe_tag in recipe_tags:
-                if tag == recipe_tag.tag.id:
-                    tags.remove(tag)
-                    recipe_tags.remove(recipe_tag)
-                    break
-
         for recipe_tag in recipe_tags:
-            recipe_tag.delete()
+            if recipe_tag.tag.id in tags:
+                tags.remove(recipe_tag.tag.id)
+                recipe_tags.remove(recipe_tag)
 
-        self.add_recipe_tags(self.instance, tags)
+        RecipesTag.objects.filter(
+            pk__in=map(lambda tag: tag.id, recipe_tags)
+        ).delete()
+
+        self.__add_recipe_tags(self.instance, tags)
 
         recipe_ingredients = list(
             RecipeIngredients.objects.filter(
                 recipe=self.instance.id
             ))
-
-        for ingredient in ingredients:
-            for recipe_ingredient in recipe_ingredients:
-                if ingredient['id'] == recipe_ingredient.ingredient.id:
-                    ingredients.remove(ingredient)
-                    recipe_ingredients.remove(recipe_ingredient)
-                    break
-
         for recipe_ingredient in recipe_ingredients:
-            recipe_ingredient.delete()
+            ingredient = next(
+                (
+                    ingredient for ingredient in ingredients if (
+                        ingredient["id"] == recipe_ingredient.ingredient.id
+                    )
+                ),
+                False
+            )
+            if ingredient:
+                ingredients.remove(ingredient)
+                recipe_ingredients.remove(recipe_ingredient)
 
-        self.add_recipe_ingridients(self.instance, ingredients)
+        RecipeIngredients.objects.filter(
+            pk__in=map(lambda ingredient: ingredient.id, recipe_ingredients)
+        ).delete()
+
+        self.__add_recipe_ingridients(self.instance, ingredients)
 
         return self.instance
 
 
 class FavoritesSerializer(serializers.ModelSerializer):
-    id = serializers.SerializerMethodField()
+    id = serializers.IntegerField(source='recipe.id')
     name = serializers.StringRelatedField(source='recipe.name')
     image = Base64ImageField(
         required=False,
         allow_null=True,
         source='recipe.image'
     )
-    cooking_time = serializers.SerializerMethodField()
+    cooking_time = serializers.IntegerField(source='recipe.cooking_time')
 
     class Meta:
         model = Favorites
         fields = ['id', 'name', 'image', 'cooking_time', ]
         read_only_fields = ['id', 'name', 'image', 'cooking_time', ]
-
-    def get_id(self, obj):
-        return obj.recipe.id
-
-    def get_cooking_time(self, obj):
-        return obj.recipe.cooking_time
 
 
 class RecepiesSubscribeSerializer(serializers.ModelSerializer):

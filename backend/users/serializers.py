@@ -6,7 +6,7 @@ from rest_framework import serializers
 User = get_user_model()
 
 
-class SpecialUserSerializer(UserSerializer):
+class FoodgramUserSerializer(UserSerializer):
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta(UserSerializer.Meta):
@@ -14,8 +14,8 @@ class SpecialUserSerializer(UserSerializer):
 
     def get_is_subscribed(self, obj):
         user = None
-        request = self.context.get("request")
-        if request and hasattr(request, "user"):
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
             user = request.user
         if user is None or user.is_anonymous:
             return False
