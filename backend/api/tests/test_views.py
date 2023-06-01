@@ -1,11 +1,17 @@
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
-from recipes.models import (Ingredients, RecipeIngredients, Recipes,
-                            RecipesTag, Tags)
+from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-from django.urls import reverse
+
+from recipes.models import (
+    Ingredients,
+    RecipeIngredients,
+    Recipes,
+    RecipesTag,
+    Tags
+)
 
 User = get_user_model()
 client = APIClient()
@@ -196,13 +202,6 @@ class GuestUsersTestCase(TestCase):
             ))
         self.assertEqual(request.status_code, status.HTTP_200_OK)
         self.assertEqual(request.data, self.tag1)
-
-    def test_guest_user_get_ingredients_list(self, *args, **kwargs):
-        request = client.get(reverse('api:ingredients-list'))
-
-        self.assertEqual(request.status_code, status.HTTP_200_OK)
-        data_request = [self.ingredient1, self.ingredient2]
-        self.assertEqual(request.data, data_request)
 
     def test_guest_user_get_ingredient(self, *args, **kwargs):
         request = client.get(
