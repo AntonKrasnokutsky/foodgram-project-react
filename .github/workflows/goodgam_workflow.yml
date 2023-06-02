@@ -70,6 +70,7 @@ jobs:
             echo DB_PORT=${{ secrets.DB_PORT }} >> .env
             echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .env
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}//foodgram:latest
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}//foodgram-frontend:latest
             sudo docker compose up -d
 
   send_message:
