@@ -42,6 +42,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Push to Docker Hub
         uses: docker/build-push-action@v2 
+        working-directory: ./backend
         with:
           file: backend/Dockerfile
           push: true
