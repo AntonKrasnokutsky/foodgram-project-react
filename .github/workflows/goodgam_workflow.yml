@@ -43,9 +43,10 @@ jobs:
       - name: Push to Docker Hub
         uses: docker/build-push-action@v2 
         with:
-          file: backend/Dockerfile
+          file: Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/foodgram:latest
+        working-directory: ./backend
 
   deploy:
     runs-on: ubuntu-latest
