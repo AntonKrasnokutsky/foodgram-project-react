@@ -111,10 +111,9 @@ class RecepiesSerializer(serializers.ModelSerializer):
         super().__init__(*args, **kwargs)
         if (
             'view' in self.context
-            and self.context['view'].action != 'create'
-            and self.context['view'].action != 'partial_update'
+            and self.context['view'].action not in ('create', 'partial_update')
         ):
-            self.fields.update({"tags": RecipeTagsSerializer(many=True)})
+            self.fields.update({'tags': RecipeTagsSerializer(many=True)})
 
     class Meta:
         model = Recipes
