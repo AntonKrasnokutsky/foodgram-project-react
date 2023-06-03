@@ -1,6 +1,6 @@
 # Дипломный проект
 
-![example workflow](https://github.com/AntonKrasnokutsky/foodgram-project-react/blob/master/.github/workflows/goodgam_workflow.yml/badge.svg)
+![example workflow](https://github.com/AntonKrasnokutsky/foodgram-project-react/actions/workflows/goodgam_workflow.yml/badge.svg)
 
 [Попробовать проект](http://62.173.141.154/)
 
