@@ -7,7 +7,7 @@ from django.db import migrations
 def create_ingridients(apps, schema_editor):
     db_alias = schema_editor.connection.alias
     Ingredients = apps.get_model('recipes', 'Ingredients')
-    with open('../data/ingredients.json', 'rb') as f:
+    with open('data/ingredients.json', 'rb') as f:
         data = json.load(f)
 
         for i in data:
