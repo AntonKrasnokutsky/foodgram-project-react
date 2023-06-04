@@ -178,11 +178,11 @@ class RecepiesSerializer(serializers.ModelSerializer):
 
     def validate_tags(self, value, *args, **kwargs):
         tags = self.initial_data.get('tags')
-        print(tags)
-        if not isinstance(tags, numbers.Number):
-            raise serializers.ValidationError(
-                'Элементы дожны быть целыми числами.'
-            )
+        for tag in tags:
+            if not isinstance(tag, numbers.Number):
+                raise serializers.ValidationError(
+                    'Элементы дожны быть числом.'
+                )
         return tags
 
     def __add_recipe_tags(self, recipe, tags, *args, **kwargs):
