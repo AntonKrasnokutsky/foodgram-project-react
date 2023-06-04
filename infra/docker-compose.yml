@@ -8,16 +8,16 @@ services:
       - 5432:5432
     volumes:
       - db_data:/var/lib/postgresql/data/
-  backend:
-    image: antonkrasnokutsky/foodgram
-    restart: always
-    volumes:
-      - static_value:/app/staticf/
-      - media_value:/app/media/
-    depends_on:
-      - db
-    env_file:
-      - .env
+  # backend:
+  #   image: antonkrasnokutsky/foodgram
+  #   restart: always
+  #   volumes:
+  #     - static_value:/app/staticf/
+  #     - media_value:/app/media/
+  #   depends_on:
+  #     - db
+  #   env_file:
+  #     - .env
   frontend:
     image: antonkrasnokutsky/foodgram-frontend:v1
     volumes:

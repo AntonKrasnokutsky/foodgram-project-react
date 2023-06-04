@@ -16,6 +16,7 @@ from recipes.models import (
     Subscriptions,
     Tags
 )
+from users.serializers import FoodgramUserSerializer
 
 User = get_user_model()
 
@@ -101,7 +102,7 @@ class RecipeIngredientsSerializer(serializers.ModelSerializer):
 
 
 class RecepiesSerializer(serializers.ModelSerializer):
-    author = AuthorSerializer(read_only=True)
+    author = FoodgramUserSerializer(read_only=True)
     image = Base64ImageField(required=False, allow_null=True)
     ingredients = RecipeIngredientsSerializer(many=True)
     is_favorited = serializers.SerializerMethodField()
@@ -111,7 +112,8 @@ class RecepiesSerializer(serializers.ModelSerializer):
         super().__init__(*args, **kwargs)
         if (
             'view' in self.context
-            and self.context['view'].action not in ('create', 'partial_update')
+            and self.context['view'].action != 'create'
+            and self.context['view'].action != 'partial_update'
         ):
             self.fields.update({'tags': RecipeTagsSerializer(many=True)})
 
@@ -176,7 +178,8 @@ class RecepiesSerializer(serializers.ModelSerializer):
 
     def validate_tags(self, value, *args, **kwargs):
         tags = self.initial_data.get('tags')
-        if not all(map(lambda x: isinstance(x, int), tags)):
+        print(tags)
+        if not isinstance(tags, numbers.Number):
             raise serializers.ValidationError(
                 'Элементы дожны быть целыми числами.'
             )

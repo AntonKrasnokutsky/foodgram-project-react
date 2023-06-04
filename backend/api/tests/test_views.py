@@ -28,6 +28,7 @@ class GuestUsersTestCase(TestCase):
             last_name='test_last_name',
             password='testPassword123',
         )
+        client.force_authenticate()
         cls.author = {
             'email': 'a@a.ru',
             'username': 'test_user',
