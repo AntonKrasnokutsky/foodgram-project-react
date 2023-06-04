@@ -21,33 +21,6 @@ from users.serializers import FoodgramUserSerializer
 User = get_user_model()
 
 
-class AuthorSerializer(serializers.ModelSerializer):
-    is_subscribed = serializers.SerializerMethodField()
-
-    class Meta:
-        model = User
-        fields = [
-            'email',
-            'id',
-            'username',
-            'first_name',
-            'last_name',
-            'is_subscribed',
-        ]
-
-    def get_is_subscribed(self, obj):
-        user = None
-        request = self.context.get('request')
-        if request and hasattr(request, 'user'):
-            user = request.user
-        if user is None or user.is_anonymous:
-            return False
-        author = get_object_or_404(User, username=obj.username)
-        return author.subscriber.filter(
-            user=user
-        ).exists()
-
-
 class Base64ImageField(serializers.ImageField):
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
