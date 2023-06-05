@@ -40,7 +40,7 @@ class IngredientsViewSet(
     # filter_backends = (DjangoFilterBackend, )
     # filterset_fields = ('$name',)
     filter_backends = (filters.SearchFilter,)
-    search_fields = ('$text',)
+    search_fields = ('$name',)
 
 
 class TagsViewSet(
