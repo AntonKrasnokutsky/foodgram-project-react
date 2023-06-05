@@ -6,7 +6,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, permissions, status, viewsets
-from rest_framework.decorators import action, permission_classes
+from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 
 from .filters import IngredientsFilter
@@ -78,9 +78,16 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     # def get_permissions(self):
     #     if self.action == 'favorite':
-    #         self.permission_classes = [permissions.IsAuthenticated, ]
+    #         permission_classes = [IsAuthenticated]
+    #     else:
+    #         permission_classes = [AuthorOrAdminOrReadOnly]
+    #     result = [permission() for permission in permission_classes]
+    #     print(result)
+    #     return [permission() for permission in permission_classes]
+    #     # if self.action == 'favorite':
+    #     #     self.permission_classes = [permissions.IsAuthenticated, ]
     #     # return super().get_permissions(self)
-    #     return super().get_permissions()
+    #     # return super().get_permissions()
 
     @property
     def get_ingridients(self, *args, **kwargs):
@@ -165,11 +172,11 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     @action(
         methods=['post', 'delete'],
-        serializer_class=FavoritesSerializer,
         detail=True,
         url_path='favorite'
     )
     def favorite(self, *args, **kwargs):
+        self.permission_classes = [permissions.IsAuthenticated, ]
         if self.request.method == 'POST':
             if Favorites.objects.filter(
                 recipe=self.recipe,
@@ -180,6 +187,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
                 }
                 return JsonResponse(data, status=HTTPStatus.BAD_REQUEST)
             serializer = self.get_serializer(data=self.request.data)
+            print('try')
             if not serializer.is_valid():
                 return super().permission_denied(self.request)
             serializer.save(
