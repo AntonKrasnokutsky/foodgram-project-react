@@ -4,7 +4,6 @@ from http import HTTPStatus
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
-# from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
@@ -38,7 +37,7 @@ class IngredientsViewSet(
     serializer_class = IngredientsSerializer
     pagination_class = None
     filter_backends = [filters.SearchFilter, ]
-    search_fields = ['name', ]
+    search_fields = ['$name', ]
 
 
 class TagsViewSet(
