@@ -19,7 +19,8 @@ router.register(
 )
 router.register(
     'recipes',
-    RecipesViewSet
+    RecipesViewSet,
+    basename='recipes'
 )
 
 app_name = 'api'

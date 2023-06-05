@@ -6,7 +6,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, permissions, status, viewsets
-from rest_framework.decorators import action
+from rest_framework.decorators import action, permission_classes
 from rest_framework.pagination import LimitOffsetPagination
 
 from .filters import IngredientsFilter
@@ -18,6 +18,7 @@ from recipes.models import (
     Subscriptions,
     Tags
 )
+from recipes.permissions import AuthorOrAdminOrReadOnly, IsAuthenticated
 from .serializers import (
     FavoritesSerializer,
     IngredientsSerializer,
@@ -56,11 +57,17 @@ class TagsViewSet(
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
-    queryset = Recipes.objects.all()
     serializer_class = RecepiesSerializer
     pagination_class = LimitOffsetPagination
     filter_backends = (filters.SearchFilter,)
     search_fields = ('author', )
+
+    def get_queryset(self):
+        params = self.request.query_params
+        is_favorited = params.get('is_favorited', None)
+        if is_favorited:
+            return self.request.user.favorites.recipe.all()
+        return Recipes.objects.all()
 
     def get_serializer_class(self, *args, **kwargs):
         if self.action == 'shopping_cart':
@@ -68,6 +75,12 @@ class RecipesViewSet(viewsets.ModelViewSet):
         if self.action == 'favorite':
             return FavoritesSerializer
         return self.serializer_class
+
+    # def get_permissions(self):
+    #     if self.action == 'favorite':
+    #         self.permission_classes = [permissions.IsAuthenticated, ]
+    #     # return super().get_permissions(self)
+    #     return super().get_permissions()
 
     @property
     def get_ingridients(self, *args, **kwargs):
@@ -153,7 +166,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
     @action(
         methods=['post', 'delete'],
         serializer_class=FavoritesSerializer,
-        permission_classes=[permissions.IsAuthenticated, ],
         detail=True,
         url_path='favorite'
     )

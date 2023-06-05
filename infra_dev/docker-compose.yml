@@ -9,7 +9,9 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data/
   # backend:
-  #   image: antonkrasnokutsky/foodgram
+  #   build:
+  #     context: ../backend
+  #     dockerfile: Dockerfile
   #   restart: always
   #   volumes:
   #     - static_value:/app/staticf/
