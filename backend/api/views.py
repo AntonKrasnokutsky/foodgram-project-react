@@ -65,11 +65,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
             return FavoritesSerializer
         return self.serializer_class
 
-    def get_permissions(self):
-        if self.action == 'favorite':
-            return [permissions.IsAuthenticated, ]
-        return self.permission_classes
-
     @property
     def get_ingridients(self, *args, **kwargs):
         recipes = self.request.user.shopping_cart.filter()
