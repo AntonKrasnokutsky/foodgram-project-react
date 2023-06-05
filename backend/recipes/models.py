@@ -1,8 +1,19 @@
+import string
+
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 
 User = get_user_model()
+
+
+def validate_tag_color(value):
+    if not all(char in string.hexdigits for char in value[1:]):
+        raise ValidationError(
+            '%(value)s должно быть шестнадцатеричным числом',
+            params={'value': value},
+        )
 
 
 class Tags(models.Model):
@@ -11,7 +22,12 @@ class Tags(models.Model):
         unique=True,
         verbose_name='Тег'
     )
-    color = models.CharField(max_length=7, unique=True, verbose_name='Цвет')
+    color = models.CharField(
+        max_length=7,
+        unique=True,
+        verbose_name='Цвет',
+        validators=[validate_tag_color]
+    )
     slug = models.SlugField(max_length=200, unique=True)
 
     class Meta:

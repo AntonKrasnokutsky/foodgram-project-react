@@ -14,7 +14,6 @@ from .models import (
 class IngredientsAdmin(admin.ModelAdmin):
     model = Ingredients
     list_display = ['name', 'measurement_unit', ]
-    list_filter = ['name', ]
     search_fields = ['name', ]
 
 

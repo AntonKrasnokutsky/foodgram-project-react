@@ -32,8 +32,8 @@ services:
       - frontend:/usr/share/nginx/html/
       - ./docs/:/usr/share/nginx/html/api/docs/
       - media_value:/usr/share/nginx/html/media/
-    depends_on:
-      - backend
+    # depends_on:
+    #   - backend
 volumes:
   db_data:
   static_value:
