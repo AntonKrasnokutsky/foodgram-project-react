@@ -9,6 +9,7 @@ from rest_framework import filters, mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 
+from .filters import IngredientsFilter
 from recipes.models import (
     Favorites,
     Ingredients,
@@ -38,7 +39,8 @@ class IngredientsViewSet(
     serializer_class = IngredientsSerializer
     pagination_class = None
     filter_backends = (DjangoFilterBackend, )
-    filterset_fields = ('@name',)
+    filterset_class = IngredientsFilter
+    # filterset_fields = ('@name',)
     # filter_backends = (filters.SearchFilter,)
     # search_fields = ('name',)
 
