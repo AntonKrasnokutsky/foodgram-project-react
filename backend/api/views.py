@@ -18,7 +18,6 @@ from recipes.models import (
     Subscriptions,
     Tags
 )
-from recipes.permissions import AuthorOrAdminOrReadOnly, IsAuthenticated
 from .serializers import (
     FavoritesSerializer,
     IngredientsSerializer,
@@ -41,9 +40,6 @@ class IngredientsViewSet(
     pagination_class = None
     filter_backends = (DjangoFilterBackend, )
     filterset_class = IngredientsFilter
-    # filterset_fields = ('@name',)
-    # filter_backends = (filters.SearchFilter,)
-    # search_fields = ('name',)
 
 
 class TagsViewSet(
@@ -75,19 +71,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
         if self.action == 'favorite':
             return FavoritesSerializer
         return self.serializer_class
-
-    # def get_permissions(self):
-    #     if self.action == 'favorite':
-    #         permission_classes = [IsAuthenticated]
-    #     else:
-    #         permission_classes = [AuthorOrAdminOrReadOnly]
-    #     result = [permission() for permission in permission_classes]
-    #     print(result)
-    #     return [permission() for permission in permission_classes]
-    #     # if self.action == 'favorite':
-    #     #     self.permission_classes = [permissions.IsAuthenticated, ]
-    #     # return super().get_permissions(self)
-    #     # return super().get_permissions()
 
     @property
     def get_ingridients(self, *args, **kwargs):
@@ -135,7 +118,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     @action(
         methods=['post', 'delete'],
-        serializer_class=ShoppingCartSerializer,
         detail=True,
         url_path='shopping_cart'
     )
@@ -173,10 +155,10 @@ class RecipesViewSet(viewsets.ModelViewSet):
     @action(
         methods=['post', 'delete'],
         detail=True,
-        url_path='favorite'
+        url_path='favorite',
+        permission_classes=[permissions.IsAuthenticated]
     )
     def favorite(self, *args, **kwargs):
-        self.permission_classes = [permissions.IsAuthenticated, ]
         if self.request.method == 'POST':
             if Favorites.objects.filter(
                 recipe=self.recipe,
@@ -187,9 +169,11 @@ class RecipesViewSet(viewsets.ModelViewSet):
                 }
                 return JsonResponse(data, status=HTTPStatus.BAD_REQUEST)
             serializer = self.get_serializer(data=self.request.data)
-            print('try')
             if not serializer.is_valid():
-                return super().permission_denied(self.request)
+                return super().permission_denied(
+                    self.request,
+                    serializer.errors
+                )
             serializer.save(
                 recipe_id=self.recipe.id,
                 user_id=self.request.user.id

@@ -238,19 +238,22 @@ class RecepiesSerializer(serializers.ModelSerializer):
 
 
 class FavoritesSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(source='recipe.id')
-    name = serializers.StringRelatedField(source='recipe.name')
+    id = serializers.IntegerField(source='recipe.id', read_only=True)
+    name = serializers.StringRelatedField(source='recipe.name', read_only=True)
     image = Base64ImageField(
         required=False,
         allow_null=True,
-        source='recipe.image'
+        source='recipe.image',
+        read_only=True
     )
-    cooking_time = serializers.IntegerField(source='recipe.cooking_time')
+    cooking_time = serializers.IntegerField(
+        source='recipe.cooking_time',
+        read_only=True
+    )
 
     class Meta:
         model = Favorites
         fields = ['id', 'name', 'image', 'cooking_time', ]
-        read_only_fields = ['id', 'name', 'image', 'cooking_time', ]
 
 
 class RecepiesSubscribeSerializer(serializers.ModelSerializer):
