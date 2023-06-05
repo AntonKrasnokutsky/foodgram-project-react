@@ -149,6 +149,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     @action(
         methods=['post', 'delete'],
         serializer_class=FavoritesSerializer,
+        permission_classes=[permissions.IsAuthenticated, ],
         detail=True,
         url_path='favorite'
     )
