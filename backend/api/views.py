@@ -8,6 +8,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
+from rest_framework_word_filter import FullWordSearchFilter
 
 from recipes.models import (
     Favorites,
@@ -37,9 +38,8 @@ class IngredientsViewSet(
     queryset = Ingredients.objects.all()
     serializer_class = IngredientsSerializer
     pagination_class = None
-    filter_backends = [filters.SearchFilter, DjangoFilterBackend, ]
-    # filterset_fields = [r'name', ]
-    search_fields = [r'name', ]
+    filter_backends = (FullWordSearchFilter, )
+    word_fields = ('name',)
 
 
 class TagsViewSet(
