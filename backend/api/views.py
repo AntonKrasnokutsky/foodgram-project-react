@@ -37,9 +37,9 @@ class IngredientsViewSet(
     queryset = Ingredients.objects.all()
     serializer_class = IngredientsSerializer
     pagination_class = None
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, ]
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend, ]
     filterset_fields = [r'name', ]
-    # search_fields = ['name', ]
+    search_fields = [r'name', ]
 
 
 class TagsViewSet(
