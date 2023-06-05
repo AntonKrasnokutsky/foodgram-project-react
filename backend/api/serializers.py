@@ -52,10 +52,10 @@ class AmountSerializer(serializers.ModelSerializer):
 
 
 class RecipeTagsSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(source='tag.id')
-    name = serializers.StringRelatedField(source='tag.name')
-    color = serializers.StringRelatedField(source='tag.color')
-    slug = serializers.SlugField(source='tag.slug')
+    id = serializers.IntegerField(source='tag.id', read_only=True)
+    name = serializers.StringRelatedField(source='tag.name', read_only=True)
+    color = serializers.StringRelatedField(source='tag.color', read_only=True)
+    slug = serializers.SlugField(source='tag.slug', read_only=True)
 
     class Meta:
         model = RecipesTag
@@ -85,10 +85,11 @@ class RecepiesSerializer(serializers.ModelSerializer):
         super().__init__(*args, **kwargs)
         if (
             'view' in self.context
-            and self.context['view'].action != 'create'
-            and self.context['view'].action != 'partial_update'
+            and self.context['view'].action not in ('create', 'partial_update')
         ):
             self.fields.update({'tags': RecipeTagsSerializer(many=True)})
+        else:
+            self.fields.update({'tags': serializers.PrimaryKeyRelatedField( many=True, queryset=Tags.objects.all() )})
 
     class Meta:
         model = Recipes

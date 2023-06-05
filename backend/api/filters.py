@@ -1,5 +1,5 @@
 from django_filters.rest_framework import CharFilter, FilterSet
-from recipes.models import Ingredients
+from recipes.models import Ingredients, Recipes
 
 
 class IngredientsFilter(FilterSet):
@@ -8,3 +8,11 @@ class IngredientsFilter(FilterSet):
     class Meta:
         model = Ingredients
         fields = ['name', ]
+
+
+class RecipesFilter(FilterSet):
+    tags = CharFilter(field_name='tag__name', )
+
+    class Meta:
+        model = Recipes
+        fields = ['tags', ]

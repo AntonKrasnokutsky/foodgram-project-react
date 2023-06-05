@@ -5,11 +5,11 @@ from django.contrib.auth import get_user_model
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, mixins, permissions, status, viewsets
+from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 
-from .filters import IngredientsFilter
+from .filters import IngredientsFilter, RecipesFilter
 from recipes.models import (
     Favorites,
     Ingredients,
@@ -55,8 +55,8 @@ class TagsViewSet(
 class RecipesViewSet(viewsets.ModelViewSet):
     serializer_class = RecepiesSerializer
     pagination_class = LimitOffsetPagination
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('author', )
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipesFilter
 
     def get_queryset(self):
         params = self.request.query_params
