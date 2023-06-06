@@ -13,11 +13,12 @@ class IngredientsFilter(FilterSet):
 
 
 class RecipesFilter(FilterSet):
-    tags = filters.ModelMultipleChoiceFilter(
-        field_name='tags__slug',
-        to_field_name='slug',
-        queryset=Tags.objects.all(),
-    )
+    tags = CharFilter(field_name='tags__tag__slug', lookup_expr='exact')
+    # tags = filters.ModelMultipleChoiceFilter(
+    #     field_name='tags__slug',
+    #     to_field_name='slug',
+    #     queryset=Tags.objects.all(),
+    # )
     is_favorited = filters.NumberFilter(method='filter_is_favorited')
     is_in_shopping_cart = filters.NumberFilter(
         method='filter_is_in_shopping_cart'
