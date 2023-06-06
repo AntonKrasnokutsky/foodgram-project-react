@@ -11,7 +11,7 @@ class IngredientsFilter(FilterSet):
 
 
 class RecipesFilter(FilterSet):
-    tags = CharFilter(field_name='tag__name', )
+    tags = CharFilter(field_name='tags__tag__name', )
 
     class Meta:
         model = Recipes
