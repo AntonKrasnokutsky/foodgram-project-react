@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.pagination import PageNumberPagination
 
 from .filters import IngredientsFilter, RecipesFilter
 from recipes.models import (
@@ -54,7 +54,7 @@ class TagsViewSet(
 
 class RecipesViewSet(viewsets.ModelViewSet):
     serializer_class = RecepiesSerializer
-    pagination_class = LimitOffsetPagination
+    pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipesFilter
 
@@ -194,7 +194,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
 
 class SubscribeViewSet(viewsets.ModelViewSet):
-    pagination_class = LimitOffsetPagination
+    pagination_class = PageNumberPagination
     serializer_class = SubscribeSerializer
     permission_classes = [permissions.IsAuthenticated, ]
 

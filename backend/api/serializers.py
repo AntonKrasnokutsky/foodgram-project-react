@@ -89,7 +89,12 @@ class RecepiesSerializer(serializers.ModelSerializer):
         ):
             self.fields.update({'tags': RecipeTagsSerializer(many=True)})
         else:
-            self.fields.update({'tags': serializers.PrimaryKeyRelatedField( many=True, queryset=Tags.objects.all() )})
+            self.fields.update({
+                'tags': serializers.PrimaryKeyRelatedField(
+                    many=True,
+                    queryset=Tags.objects.all()
+                )
+            })
 
     class Meta:
         model = Recipes
