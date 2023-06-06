@@ -87,7 +87,7 @@ class RecepiesSerializer(serializers.ModelSerializer):
             'view' in self.context
             and self.context['view'].action not in ('create', 'partial_update')
         ):
-            self.fields.update({'tags': RecipeTagsSerializer(many=True)})
+            self.fields.update({'tags': TagsSerializer(many=True)})
         else:
             self.fields.update({
                 'tags': serializers.PrimaryKeyRelatedField(
