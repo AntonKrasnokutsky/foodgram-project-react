@@ -146,7 +146,12 @@ class RecepiesSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     'Значение полей "id" дожно быть числом.'
                 )
-            if not isinstance(recipe_ingredient['amount'], numbers.Number):
+            if (
+                isinstance(type(recipe_ingredient['amount']), str)
+                and recipe_ingredient['amount'].isdigit
+            ):
+                recipe_ingredient['amount'] = int(recipe_ingredient['amount'])
+            elif not isinstance(recipe_ingredient['amount'], numbers.Number):
                 raise serializers.ValidationError(
                     'Значение полей "amount" дожно быть числом.'
                 )
