@@ -63,7 +63,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
         is_favorited = params.get('is_favorited', None)
         if is_favorited:
             return Recipes.objects.filter(
-                recipe_favorite__user=self.request.user
+                favorites__user=self.request.user
             )
         return Recipes.objects.all()
 
