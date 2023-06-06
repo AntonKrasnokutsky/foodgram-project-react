@@ -13,16 +13,16 @@ class IngredientsFilter(FilterSet):
 
 
 class RecipesFilter(FilterSet):
-    # tags = filters.AllValuesMultipleFilter CharFilter(
-    #     field_name='tags__tag__slug',
-    #     lookup_expr='exact',
-    #     exclude=True
-    # )
-    tags = filters.MultipleChoiceFilter(
+    tags = CharFilter(
         field_name='tags__tag__slug',
         lookup_expr='exact',
         # exclude=True
     )
+    # tags = filters.MultipleChoiceFilter(
+    #     field_name='tags__tag__slug',
+    #     lookup_expr='exact',
+    #     # exclude=True
+    # )
     # tags = filters.ModelMultipleChoiceFilter(
     #     field_name='tags__slug',
     #     to_field_name='slug',
