@@ -182,6 +182,14 @@ class RecepiesSerializer(serializers.ModelSerializer):
             )
 
     def validate(self, attrs):
+        if not attrs['tags']:
+            raise serializers.ValidationError(
+                'Должен быть хотя бы 1 тэг.'
+            )
+        if not attrs['ingredients']:
+            raise serializers.ValidationError(
+                'Должен быть хотя бы 1 ингредиент.'
+            )
         self.fields.update({"tags": RecipeTagsSerializer(many=True)})
         return super().validate(attrs)
 

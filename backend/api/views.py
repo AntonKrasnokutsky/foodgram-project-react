@@ -53,24 +53,11 @@ class TagsViewSet(
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
+    queryset = Recipes.objects.all()
     serializer_class = RecepiesSerializer
     pagination_class = PageNumberLimitPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipesFilter
-
-    def get_queryset(self):
-        params = self.request.query_params
-        is_favorited = params.get('is_favorited', None)
-        if is_favorited:
-            return Recipes.objects.filter(
-                favorites__user=self.request.user
-            )
-        is_in_shopping_cart = params.get('is_in_shopping_cart', None)
-        if is_in_shopping_cart:
-            return Recipes.objects.filter(
-                shopping_cart__user=self.request.user
-            )
-        return Recipes.objects.all()
 
     def get_serializer_class(self, *args, **kwargs):
         if self.action == 'shopping_cart':
@@ -146,7 +133,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
             user_id=self.request.user.id
         )
         return JsonResponse(serializer.data, status=status.HTTP_200_OK)
-    
+
     @shopping_cart.mapping.delete
     def delete_shopping_cart(self, *args, **kwargs):
         try:

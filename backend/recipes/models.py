@@ -135,7 +135,12 @@ class RecipeIngredients(models.Model):
         'Ingredients',
         on_delete=models.CASCADE,
     )
-    amount = models.PositiveIntegerField()
+    amount = models.PositiveIntegerField(
+        validators=[MinValueValidator(
+            1,
+            'Количество ингридиента должно быть больше 0.'
+        )]
+    )
 
     class Meta:
         ordering = ['recipe', 'ingredient', ]
