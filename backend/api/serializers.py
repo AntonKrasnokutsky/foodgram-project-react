@@ -148,7 +148,7 @@ class RecepiesSerializer(serializers.ModelSerializer):
                 )
             if (
                 isinstance(type(recipe_ingredient['amount']), str)
-                and recipe_ingredient['amount'].isdigit
+                and recipe_ingredient['amount'].isdigit()
             ):
                 recipe_ingredient['amount'] = int(recipe_ingredient['amount'])
             elif not isinstance(recipe_ingredient['amount'], numbers.Number):
