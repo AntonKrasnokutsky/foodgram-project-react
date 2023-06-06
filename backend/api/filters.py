@@ -1,4 +1,4 @@
-from django_filters.rest_framework import CharFilter, FilterSet, filters
+from django_filters.rest_framework import CharFilter, FilterSet, filters, MultipleChoiceFilter
 from recipes.models import Ingredients, Recipes
 
 # from recipes.models import Tags
@@ -13,15 +13,15 @@ class IngredientsFilter(FilterSet):
 
 
 class RecipesFilter(FilterSet):
-    tags = CharFilter(
-        field_name='tags__tag__slug',
-        # exclude=True
-    )
-    # tags = filters.MultipleChoiceFilter(
+    # tags = CharFilter(
     #     field_name='tags__tag__slug',
-    #     lookup_expr='exact',
     #     # exclude=True
     # )
+    tags = MultipleChoiceFilter(
+        field_name='tags__tag__slug',
+        # lookup_expr='exact',
+        # exclude=True
+    )
     # tags = filters.ModelMultipleChoiceFilter(
     #     field_name='tags__slug',
     #     to_field_name='slug',
