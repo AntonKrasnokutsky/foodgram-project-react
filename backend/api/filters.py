@@ -11,7 +11,7 @@ class IngredientsFilter(FilterSet):
 
 
 class RecipesFilter(FilterSet):
-    tags = CharFilter(field_name='tags__tag__name', )
+    tags = CharFilter(field_name='tags__tag__slug', lookup_expr='iexact')
 
     class Meta:
         model = Recipes

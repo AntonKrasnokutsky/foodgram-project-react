@@ -62,7 +62,9 @@ class RecipesViewSet(viewsets.ModelViewSet):
         params = self.request.query_params
         is_favorited = params.get('is_favorited', None)
         if is_favorited:
-            return self.request.user.favorites.recipe.all()
+            return Recipes.objects.filter(
+                recipe_favorite__user=self.request.user
+            )
         return Recipes.objects.all()
 
     def get_serializer_class(self, *args, **kwargs):

@@ -121,7 +121,7 @@ class RecepiesSerializer(serializers.ModelSerializer):
         user = self.__current_user()
         if user is None or user.is_anonymous:
             return False
-        return obj.favorites.filter(user=user).exists()
+        return obj.recipe_favorite.filter(user=user).exists()
 
     def get_is_in_shopping_cart(self, obj):
         user = self.__current_user()
