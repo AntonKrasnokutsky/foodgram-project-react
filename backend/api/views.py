@@ -65,6 +65,11 @@ class RecipesViewSet(viewsets.ModelViewSet):
             return Recipes.objects.filter(
                 favorites__user=self.request.user
             )
+        is_in_shopping_cart = params.get('is_in_shopping_cart', None)
+        if is_in_shopping_cart:
+            return Recipes.objects.filter(
+                shopping_cart__user=self.request.user
+            )
         return Recipes.objects.all()
 
     def get_serializer_class(self, *args, **kwargs):
@@ -119,28 +124,31 @@ class RecipesViewSet(viewsets.ModelViewSet):
         return response
 
     @action(
-        methods=['post', 'delete'],
+        methods=['post'],
         detail=True,
-        url_path='shopping_cart'
+        url_path='shopping_cart',
+        permission_classes=[permissions.IsAuthenticated]
     )
     def shopping_cart(self, *args, **kwargs):
-        if self.request.method == 'POST':
-            if ShoppingCart.objects.filter(
-                recipe=self.recipe,
-                user=self.request.user
-            ).exists():
-                data = {
-                    'error': 'Рецепт уже в списке покупок.'
-                }
-                return JsonResponse(data, status=HTTPStatus.BAD_REQUEST)
-            serializer = self.get_serializer(data=self.request.data)
-            if not serializer.is_valid():
-                return super().permission_denied(self.request)
-            serializer.save(
-                recipe_id=self.recipe.id,
-                user_id=self.request.user.id
-            )
-            return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+        if ShoppingCart.objects.filter(
+            recipe=self.recipe,
+            user=self.request.user
+        ).exists():
+            data = {
+                'error': 'Рецепт уже в списке покупок.'
+            }
+            return JsonResponse(data, status=HTTPStatus.BAD_REQUEST)
+        serializer = self.get_serializer(data=self.request.data)
+        if not serializer.is_valid():
+            return super().permission_denied(self.request)
+        serializer.save(
+            recipe_id=self.recipe.id,
+            user_id=self.request.user.id
+        )
+        return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+    
+    @shopping_cart.mapping.delete
+    def delete_shopping_cart(self, *args, **kwargs):
         try:
             shopping_cart = ShoppingCart.objects.get(
                 recipe=self.recipe,
@@ -155,32 +163,34 @@ class RecipesViewSet(viewsets.ModelViewSet):
         return JsonResponse({}, status=HTTPStatus.NO_CONTENT)
 
     @action(
-        methods=['post', 'delete'],
+        methods=['post', ],
         detail=True,
         url_path='favorite',
         permission_classes=[permissions.IsAuthenticated]
     )
     def favorite(self, *args, **kwargs):
-        if self.request.method == 'POST':
-            if Favorites.objects.filter(
-                recipe=self.recipe,
-                user=self.request.user
-            ).exists():
-                data = {
-                    'error': 'Рецепт уже в избранном.'
-                }
-                return JsonResponse(data, status=HTTPStatus.BAD_REQUEST)
-            serializer = self.get_serializer(data=self.request.data)
-            if not serializer.is_valid():
-                return super().permission_denied(
-                    self.request,
-                    serializer.errors
-                )
-            serializer.save(
-                recipe_id=self.recipe.id,
-                user_id=self.request.user.id
+        if Favorites.objects.filter(
+            recipe=self.recipe,
+            user=self.request.user
+        ).exists():
+            data = {
+                'error': 'Рецепт уже в избранном.'
+            }
+            return JsonResponse(data, status=HTTPStatus.BAD_REQUEST)
+        serializer = self.get_serializer(data=self.request.data)
+        if not serializer.is_valid():
+            return super().permission_denied(
+                self.request,
+                serializer.errors
             )
-            return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+        serializer.save(
+            recipe_id=self.recipe.id,
+            user_id=self.request.user.id
+        )
+        return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+
+    @favorite.mapping.delete
+    def delete_favorite(self, *args, **kwargs):
         try:
             favorite = Favorites.objects.get(
                 recipe=self.recipe,
