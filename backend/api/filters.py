@@ -18,7 +18,7 @@ class RecipesFilter(FilterSet):
     #     lookup_expr='exact',
     #     exclude=True
     # )
-    tags = filters.AllValuesMultipleFilter(
+    tags = filters.MultipleChoiceField(
         field_name='tags__tag__slug',
         lookup_expr='exact',
         # exclude=True
