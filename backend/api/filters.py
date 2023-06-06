@@ -15,7 +15,6 @@ class IngredientsFilter(FilterSet):
 class RecipesFilter(FilterSet):
     tags = CharFilter(
         field_name='tags__tag__slug',
-        lookup_expr='icontains',
         # exclude=True
     )
     # tags = filters.MultipleChoiceFilter(
