@@ -13,7 +13,11 @@ class IngredientsFilter(FilterSet):
 
 
 class RecipesFilter(FilterSet):
-    tags = CharFilter(field_name='tags__tag__slug', lookup_expr='exact')
+    tags = CharFilter(
+        field_name='tags__tag__slug',
+        lookup_expr='exact',
+        exclude=True
+    )
     # tags = filters.ModelMultipleChoiceFilter(
     #     field_name='tags__slug',
     #     to_field_name='slug',
