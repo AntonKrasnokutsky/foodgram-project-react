@@ -147,7 +147,7 @@ class RecepiesSerializer(serializers.ModelSerializer):
                     'Значение полей "id" дожно быть числом.'
                 )
             if (
-                isinstance(type(recipe_ingredient['amount']), str)
+                isinstance(recipe_ingredient['amount'], str)
                 and recipe_ingredient['amount'].isdigit()
             ):
                 recipe_ingredient['amount'] = int(recipe_ingredient['amount'])
