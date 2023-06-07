@@ -149,13 +149,13 @@ class RecepiesSerializer(serializers.ModelSerializer):
             if (
                 not isinstance(recipe_ingredient['amount'], str)
                 and not recipe_ingredient['amount'].isdigit()
-                or not isinstance(recipe_ingredient['amount'], numbers.Number)
+                not isinstance(recipe_ingredient['amount'], numbers.Number)
             ):
                 raise serializers.ValidationError(
                     'Значение полей "amount" дожно быть числом.'
                 )
             ingridient['id'] = int(recipe_ingredient['id'])
-            ingridient['amount'] = recipe_ingredient['amount']
+            ingridient['amount'] = int(recipe_ingredient['amount'])
             value.append(ingridient)
         return value
 
