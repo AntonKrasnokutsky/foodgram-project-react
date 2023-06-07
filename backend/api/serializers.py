@@ -149,7 +149,7 @@ class RecepiesSerializer(serializers.ModelSerializer):
             if (
                 not isinstance(recipe_ingredient['amount'], str)
                 and not recipe_ingredient['amount'].isdigit()
-                not isinstance(recipe_ingredient['amount'], numbers.Number)
+                or not isinstance(recipe_ingredient['amount'], numbers.Number)
             ):
                 raise serializers.ValidationError(
                     'Значение полей "amount" дожно быть числом.'
