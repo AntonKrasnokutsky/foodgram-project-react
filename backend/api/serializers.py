@@ -4,6 +4,7 @@ import numbers
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
+from django.utils import datastructures
 from rest_framework import serializers
 
 from recipes.models import (
@@ -293,11 +294,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
     first_name = serializers.StringRelatedField(source='author.first_name')
     last_name = serializers.StringRelatedField(source='author.last_name')
     is_subscribed = serializers.SerializerMethodField()
-    recipes = RecepiesSubscribeSerializer(
-        read_only=True,
-        many=True,
-        source='author.recipes'
-    )
+    recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
 
     class Meta:
@@ -322,6 +319,15 @@ class SubscribeSerializer(serializers.ModelSerializer):
             'recipes',
             'recipes_count',
         ]
+
+    def get_recipes(self, obj):
+        try:
+            request = self.context.get('request')
+            recipes_limit = int(request.query_params['recipes_limit'])
+            recipes = obj.author.recipes.all()[:recipes_limit]
+        except datastructures.MultiValueDictKeyError:
+            recipes = obj.author.recipes.all()
+        return RecepiesSubscribeSerializer(recipes, many=True).data
 
     def get_is_subscribed(self, obj):
         user = None
