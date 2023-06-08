@@ -101,7 +101,7 @@ class Recipes(models.Model):
     tags = models.ManyToManyField('Tags', through='RecipesTag')
 
     class Meta:
-        ordering = ['name', ]
+        ordering = ['id', ]
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
 
